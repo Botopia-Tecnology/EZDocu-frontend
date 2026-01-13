@@ -19,7 +19,12 @@ type SessionData = {
   expires: string;
 };
 
-const key = new TextEncoder().encode(process.env.AUTH_SECRET);
+// Validate AUTH_SECRET exists and is not empty
+const authSecret = process.env.AUTH_SECRET;
+if (!authSecret || authSecret.length === 0) {
+  throw new Error('AUTH_SECRET environment variable is not set or is empty. Please check your .env file.');
+}
+const key = new TextEncoder().encode(authSecret);
 
 export async function signToken(payload: SessionData) {
   return await new SignJWT(payload)

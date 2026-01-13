@@ -138,7 +138,8 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
 
 export async function signOut() {
   // Simple cookie deletion, no backend call needed for JWT usually unless we have a blacklist
-  (await import('next/headers')).cookies().then(c => c.delete('session'));
+  const cookieStore = await (await import('next/headers')).cookies();
+  cookieStore.delete('session');
   redirect('/sign-in');
 }
 
