@@ -15,22 +15,28 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
   const { email, password } = data;
 
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/login`, {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    console.log('[DEBUG] signIn: API URL:', apiUrl);
+    console.log('[DEBUG] signIn: Attempting login for email:', email);
+
+    const response = await fetch(`${apiUrl}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
 
+    console.log('[DEBUG] signIn: Response status:', response.status);
     const result = await response.json();
+    console.log('[DEBUG] signIn: Response body:', JSON.stringify(result, null, 2));
 
-    if (result.status !== 'success' || !result.user) {
+    // Backend returns { status: 200, user: ..., token: ... }
+    if (result.status !== 200 || !result.user) {
       return {
         error: result.message || 'Invalid email or password. Please try again.',
         email,
         password
       };
     }
-
 
     // Use the backend token as accessToken
     await setSession({ ...result.user, teamId: result.team?.id }, result.token);
@@ -43,6 +49,7 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
 
     redirect('/dashboard');
   } catch (error) {
+    console.error('[DEBUG] signIn: Error caught:', error);
     if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
       throw error;
     }
@@ -76,7 +83,8 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
 
     const result = await response.json();
 
-    if (result.status !== 'success' || !result.user) {
+    // Backend returns { status: 201, data: { user: ..., account: ... } }
+    if (result.status !== 201 || !result.data?.user) {
       return {
         error: result.message || 'Failed to create user. Please try again.',
         email,
@@ -87,16 +95,35 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
       };
     }
 
+    const { user, account } = result.data;
+    // Note: token is missing in register response currently in AuthService, might need to fix that too or require login.
+    // For now, assuming token might be added or we redirect to login.
+    // Actually AuthService.register returns data and status but NO token. 
+    // The original code assumed auto-login.
 
-    await setSession({ ...result.user, teamId: result.team?.id }, result.token);
+    // If no token, we probably should redirect to login.
+    // But let's check if we can Auto login.
+    // If not, redirecting to sign-in is safer.
 
-    const redirectTo = formData.get('redirect') as string | null;
-    if (redirectTo === 'checkout') {
-      const priceId = formData.get('priceId') as string;
-      return createCheckoutSession({ team: result.team, priceId });
+    // HOWEVER, the original code did setSession. 
+    // If I want to match original behavior, I should update AuthService to return token.
+    // For now, let's just fix the crash.
+
+    if (result.token) {
+      await setSession({ ...user, teamId: account?.id }, result.token);
+
+      const redirectTo = formData.get('redirect') as string | null;
+      if (redirectTo === 'checkout') {
+        const priceId = formData.get('priceId') as string;
+        return createCheckoutSession({ team: account, priceId });
+      }
+
+      redirect('/dashboard');
+    } else {
+      // If no token returned, redirect to sign-in
+      redirect('/sign-in?success=true');
     }
 
-    redirect('/dashboard');
   } catch (error) {
     if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
       throw error;
