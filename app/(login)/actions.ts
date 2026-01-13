@@ -31,7 +31,9 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
       };
     }
 
-    await setSession({ ...result.user, teamId: result.team?.id });
+
+    // Use the backend token as accessToken
+    await setSession({ ...result.user, teamId: result.team?.id }, result.token);
 
     const redirectTo = formData.get('redirect') as string | null;
     if (redirectTo === 'checkout') {
@@ -56,17 +58,20 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
 const signUpSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  accountName: z.string().min(1, 'Account name is required'),
   inviteId: z.string().optional()
 });
 
 export const signUp = validatedAction(signUpSchema, async (data, formData) => {
-  const { email, password, inviteId } = data;
+  const { email, password, firstName, lastName, accountName, inviteId } = data;
 
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, inviteId }),
+      body: JSON.stringify({ email, password, firstName, lastName, accountName, inviteId }),
     });
 
     const result = await response.json();
@@ -75,11 +80,15 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
       return {
         error: result.message || 'Failed to create user. Please try again.',
         email,
-        password
+        password,
+        firstName,
+        lastName,
+        accountName
       };
     }
 
-    await setSession({ ...result.user, teamId: result.team?.id });
+
+    await setSession({ ...result.user, teamId: result.team?.id }, result.token);
 
     const redirectTo = formData.get('redirect') as string | null;
     if (redirectTo === 'checkout') {

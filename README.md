@@ -1,119 +1,62 @@
-# Next.js SaaS Starter
+# EZDocu Frontend
 
-This is a starter template for building a SaaS application using **Next.js** with support for authentication, Stripe integration for payments, and a dashboard for logged-in users.
-
-**Demo: [https://next-saas-start.vercel.app/](https://next-saas-start.vercel.app/)**
+This is the Next.js frontend for EZDocu, featuring a modern dashboard, authentication integrating with the `auth-ms` microservice, and role-based access control.
 
 ## Features
 
-- Marketing landing page (`/`) with animated Terminal element
-- Pricing page (`/pricing`) which connects to Stripe Checkout
-- Dashboard pages with CRUD operations on users/teams
-- Basic RBAC with Owner and Member roles
-- Subscription management with Stripe Customer Portal
-- Email/password authentication with JWTs stored to cookies
-- Global middleware to protect logged-in routes
-- Local middleware to protect Server Actions or validate Zod schemas
-- Activity logging system for any user events
-
-## Tech Stack
-
-- **Framework**: [Next.js](https://nextjs.org/)
-- **Database**: [Postgres](https://www.postgresql.org/)
-- **ORM**: [Drizzle](https://orm.drizzle.team/)
-- **Payments**: [Stripe](https://stripe.com/)
-- **UI Library**: [shadcn/ui](https://ui.shadcn.com/)
+- **Authentication**: JWT-based login/signup powered by the backend `auth-ms`.
+- **RBAC**: 
+    - **Context**: `AuthContext` provides global user state and role checking (`hasRole`, `hasGlobalRole`).
+    - **Middleware**: Protected routes (`/admin`, `/dashboard`) via `middleware.ts`.
+- **Dashboards**:
+    - **Admin Dashboard** (`/admin`): For SaaS superadmins.
+    - **User Dashboard** (`/dashboard`): Tailored views for `Owner` vs `Member`.
+- **UI**: Built with [shadcn/ui](https://ui.shadcn.com/) and Tailwind CSS.
+- **Data Fetching**: Refactored to use Server Actions and Client Context (replacing some legacy SWR patterns).
 
 ## Getting Started
 
+### Prerequisites
+*   Ensure the Backend (`auth-ms` and `api-gateway`) is running.
+
+### Installation
+
 ```bash
-git clone https://github.com/nextjs/saas-starter
-cd saas-starter
+cd frontend
 pnpm install
 ```
 
-## Running Locally
+### Environment Variables
+Create a `.env` file based on `.env.example`:
 
-[Install](https://docs.stripe.com/stripe-cli) and log in to your Stripe account:
-
-```bash
-stripe login
+```env
+NEXT_PUBLIC_API_URL="http://localhost:3000" # URL of the API Gateway
+AUTH_SECRET="your_matching_jwt_secret" # Must match backend JWT_SECRET for verifying tokens in middleware
 ```
 
-Use the included setup script to create your `.env` file:
-
-```bash
-pnpm db:setup
-```
-
-Run the database migrations and seed the database with a default user and team:
-
-```bash
-pnpm db:migrate
-pnpm db:seed
-```
-
-This will create the following user and team:
-
-- User: `test@test.com`
-- Password: `admin123`
-
-You can also create new users through the `/sign-up` route.
-
-Finally, run the Next.js development server:
+### Running Locally
 
 ```bash
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
+Open [http://localhost:3000](http://localhost:3000) (default port may vary if 3000 is taken, typically Next.js uses 3000).
 
-You can listen for Stripe webhooks locally through their CLI to handle subscription change events:
+## Testing Roles (Login Credentials)
 
-```bash
-stripe listen --forward-to localhost:3000/api/stripe/webhook
-```
+The database seed provides the following users for testing RBAC functionality:
 
-## Testing Payments
+| Role | Email | Password | Access |
+| :--- | :--- | :--- | :--- |
+| **SaaS Admin** | `admin@ezdocu.com` | `password123` | Access to `/admin` and `/dashboard`. |
+| **Owner** | `owner@agency.com` | `password123` | Access to `/dashboard` (Team Management visible). |
+| **Member** | `member@agency.com` | `password123` | Access to `/dashboard` (Restricted view). |
 
-To test Stripe payments, use the following test card details:
+## Project Structure
 
-- Card Number: `4242 4242 4242 4242`
-- Expiration: Any future date
-- CVC: Any 3-digit number
-
-## Going to Production
-
-When you're ready to deploy your SaaS application to production, follow these steps:
-
-### Set up a production Stripe webhook
-
-1. Go to the Stripe Dashboard and create a new webhook for your production environment.
-2. Set the endpoint URL to your production API route (e.g., `https://yourdomain.com/api/stripe/webhook`).
-3. Select the events you want to listen for (e.g., `checkout.session.completed`, `customer.subscription.updated`).
-
-### Deploy to Vercel
-
-1. Push your code to a GitHub repository.
-2. Connect your repository to [Vercel](https://vercel.com/) and deploy it.
-3. Follow the Vercel deployment process, which will guide you through setting up your project.
-
-### Add environment variables
-
-In your Vercel project settings (or during deployment), add all the necessary environment variables. Make sure to update the values for the production environment, including:
-
-1. `BASE_URL`: Set this to your production domain.
-2. `STRIPE_SECRET_KEY`: Use your Stripe secret key for the production environment.
-3. `STRIPE_WEBHOOK_SECRET`: Use the webhook secret from the production webhook you created in step 1.
-4. `POSTGRES_URL`: Set this to your production database URL.
-5. `AUTH_SECRET`: Set this to a random string. `openssl rand -base64 32` will generate one.
-
-## Other Templates
-
-While this template is intentionally minimal and to be used as a learning resource, there are other paid versions in the community which are more full-featured:
-
-- https://achromatic.dev
-- https://shipfa.st
-- https://makerkit.dev
-- https://zerotoshipped.com
-- https://turbostarter.dev
+*   `app/(login)`: Login and Registration pages (`sign-in`, `sign-up`).
+*   `app/(dashboard)`: Authenticated dashboard layouts.
+    *   `admin/`: Routes specific to Global Admins.
+    *   `dashboard/`: General dashboard for Account Users.
+*   `lib/auth`: Authentication logic (Session management, Context).
+*   `middleware.ts`: Route protection logic.

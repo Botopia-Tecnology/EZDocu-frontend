@@ -29,7 +29,7 @@ export function validatedAction<S extends z.ZodType<any, any>, T>(
 
 // User type definition (simplified)
 type User = {
-  id: number;
+  id: number | string;
   [key: string]: any;
 };
 

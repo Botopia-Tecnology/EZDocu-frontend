@@ -7,11 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { updateAccount } from '@/app/(login)/actions';
-import { User } from '@/lib/db/schema';
-import useSWR from 'swr';
 import { Suspense } from 'react';
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { useAuth } from '@/lib/auth/auth-context';
 
 type ActionState = {
   name?: string;
@@ -62,12 +59,17 @@ function AccountForm({
 }
 
 function AccountFormWithData({ state }: { state: ActionState }) {
-  const { data: user } = useSWR<User>('/api/user', fetcher);
+  const { user } = useAuth();
+
+  // Note: user object here comes from session/context.
+  // Ideally, if updating account, we should refresh this data.
+  // For now, we use what's available.
+
   return (
     <AccountForm
       state={state}
-      nameValue={user?.name ?? ''}
-      emailValue={user?.email ?? ''}
+      nameValue={`${user?.firstName || ''} ${user?.lastName || ''}`.trim()}
+      emailValue={user?.email || ''}
     />
   );
 }
@@ -119,3 +121,4 @@ export default function GeneralPage() {
     </section>
   );
 }
+

@@ -38,6 +38,62 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
           <input type="hidden" name="redirect" value={redirect || ''} />
           <input type="hidden" name="priceId" value={priceId || ''} />
           <input type="hidden" name="inviteId" value={inviteId || ''} />
+          {mode === 'signup' && (
+            <>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <Label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                    First Name
+                  </Label>
+                  <div className="mt-1">
+                    <Input
+                      id="firstName"
+                      name="firstName"
+                      type="text"
+                      defaultValue={state.firstName}
+                      required
+                      className="appearance-none rounded-full relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                      placeholder="Jane"
+                    />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <Label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                    Last Name
+                  </Label>
+                  <div className="mt-1">
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      defaultValue={state.lastName}
+                      required
+                      className="appearance-none rounded-full relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                      placeholder="Doe"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="accountName" className="block text-sm font-medium text-gray-700">
+                  Company / Organization Name
+                </Label>
+                <div className="mt-1">
+                  <Input
+                    id="accountName"
+                    name="accountName"
+                    type="text"
+                    defaultValue={state.accountName}
+                    required
+                    className="appearance-none rounded-full relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                    placeholder="Acme Translations LLC"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
           <div>
             <Label
               htmlFor="email"
@@ -125,9 +181,8 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
 
           <div className="mt-6">
             <Link
-              href={`${mode === 'signin' ? '/sign-up' : '/sign-in'}${
-                redirect ? `?redirect=${redirect}` : ''
-              }${priceId ? `&priceId=${priceId}` : ''}`}
+              href={`${mode === 'signin' ? '/sign-up' : '/sign-in'}${redirect ? `?redirect=${redirect}` : ''
+                }${priceId ? `&priceId=${priceId}` : ''}`}
               className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
             >
               {mode === 'signin'

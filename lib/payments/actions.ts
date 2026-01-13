@@ -22,6 +22,7 @@ export const checkoutAction = validatedActionWithUser(checkoutSchema, async (dat
   };
 
   await createCheckoutSession({ team, priceId });
+  return {};
 });
 
 const portalSchema = z.object({});
@@ -40,4 +41,5 @@ export const customerPortalAction = validatedActionWithUser(portalSchema, async 
   } else {
     redirect('/pricing');
   }
+  return {};
 });
