@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { AuroraBackground } from '@/components/ui/aurora-background';
 import {
   FileText,
   Languages,
@@ -17,7 +18,7 @@ import {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen">
       {/* Navigation */}
       <nav className="border-b bg-white/80 backdrop-blur-sm fixed w-full z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -38,48 +39,117 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4">
-        <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-            Professional Document Translation
-            <span className="block text-blue-600 mt-2">With Legal Certification</span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            AI-powered OCR and translation platform designed for certified translators,
-            law firms, and immigration offices. Maintain full control, audit trails, and legal compliance.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/sign-up">
-              <Button size="lg" className="text-lg px-8">
-                Start Free Trial
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
-            <Link href="#features">
-              <Button size="lg" variant="outline" className="text-lg px-8">
-                Learn More
-              </Button>
-            </Link>
-          </div>
+      {/* Hero Section with Aurora Background */}
+      <AuroraBackground>
+        <section className="pt-32 pb-20 px-4 relative z-10 w-full">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* Left side - Content */}
+              <div>
+                <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+                  Professional Document Translation
+                  <span className="block text-blue-600 mt-2">With Legal Certification</span>
+                </h1>
+                <p className="text-xl text-gray-600 mb-8">
+                  AI-powered OCR and translation platform designed for certified translators,
+                  law firms, and immigration offices. Maintain full control, audit trails, and legal compliance.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                  <Link href="/sign-up">
+                    <Button size="lg" className="text-lg px-8">
+                      Start Free Trial
+                      <ArrowRight className="ml-2 w-5 h-5" />
+                    </Button>
+                  </Link>
+                  <Link href="#features">
+                    <Button size="lg" variant="outline" className="text-lg px-8">
+                      Learn More
+                    </Button>
+                  </Link>
+                </div>
 
-          {/* Trust Indicators */}
-          <div className="mt-12 flex flex-wrap justify-center gap-8 text-sm text-gray-600">
-            <div className="flex items-center gap-2">
-              <Shield className="w-5 h-5 text-green-600" />
-              <span>Legal Compliance</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Lock className="w-5 h-5 text-green-600" />
-              <span>Secure Multi-tenant</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <FileCheck className="w-5 h-5 text-green-600" />
-              <span>Full Audit Trail</span>
+                {/* Trust Indicators */}
+                <div className="flex flex-wrap gap-6 text-sm text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-5 h-5 text-green-600" />
+                    <span>Legal Compliance</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-5 h-5 text-green-600" />
+                    <span>Secure Multi-tenant</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <FileCheck className="w-5 h-5 text-green-600" />
+                    <span>Full Audit Trail</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right side - Image Tiles Grid */}
+              <div className="relative h-[600px] hidden lg:block">
+                <div className="grid grid-cols-3 grid-rows-3 gap-4 h-full">
+                  {/* Row 1 */}
+                  <div className="bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg overflow-hidden shadow-lg">
+                    <div className="w-full h-full flex items-center justify-center p-6">
+                      <div className="text-center">
+                        <FileText className="w-16 h-16 text-blue-600 mx-auto mb-3" />
+                        <p className="font-semibold text-gray-800">OCR Processing</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-span-2 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg overflow-hidden shadow-lg">
+                    <div className="w-full h-full flex items-center justify-center p-6">
+                      <div className="text-center">
+                        <Languages className="w-20 h-20 text-purple-600 mx-auto mb-3" />
+                        <p className="font-semibold text-gray-800">AI Translation</p>
+                        <p className="text-sm text-gray-600 mt-1">50+ Languages</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 2 */}
+                  <div className="bg-gradient-to-br from-green-100 to-green-200 rounded-lg overflow-hidden shadow-lg">
+                    <div className="w-full h-full flex items-center justify-center p-4">
+                      <div className="text-center">
+                        <Shield className="w-12 h-12 text-green-600 mx-auto mb-2" />
+                        <p className="text-sm font-semibold text-gray-800">Certified</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="col-span-2 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg overflow-hidden shadow-lg">
+                    <div className="w-full h-full flex items-center justify-center p-6">
+                      <div className="text-center">
+                        <Users className="w-16 h-16 text-orange-600 mx-auto mb-3" />
+                        <p className="font-semibold text-gray-800">Team Collaboration</p>
+                        <p className="text-sm text-gray-600 mt-1">Multi-user accounts</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 3 */}
+                  <div className="col-span-2 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-lg overflow-hidden shadow-lg">
+                    <div className="w-full h-full flex items-center justify-center p-6">
+                      <div className="text-center">
+                        <Clock className="w-14 h-14 text-yellow-600 mx-auto mb-2" />
+                        <p className="font-semibold text-gray-800">Version Control</p>
+                        <p className="text-sm text-gray-600 mt-1">Track all changes</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gradient-to-br from-red-100 to-red-200 rounded-lg overflow-hidden shadow-lg">
+                    <div className="w-full h-full flex items-center justify-center p-4">
+                      <div className="text-center">
+                        <FileCheck className="w-10 h-10 text-red-600 mx-auto mb-2" />
+                        <p className="text-sm font-semibold text-gray-800">Audit Ready</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </AuroraBackground>
 
       {/* Problem/Solution Section */}
       <section className="py-20 px-4 bg-gray-100">
