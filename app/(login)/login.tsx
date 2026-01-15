@@ -6,14 +6,24 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CircleIcon, Loader2 } from 'lucide-react';
+import { FileText, Loader2, CheckCircle } from 'lucide-react';
+
+type UserType = 'admin' | 'translator' | 'member';
+
+function getRedirectByRole(userType: UserType): string {
+  switch (userType) {
+    case 'admin': return '/admin';
+    case 'translator': return '/dashboard';
+    case 'member': return '/workspace';
+    default: return '/dashboard';
+  }
+}
 
 export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const redirect = searchParams.get('redirect');
-  const priceId = searchParams.get('priceId');
-  const inviteId = searchParams.get('inviteId');
+  const success = searchParams.get('success');
 
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
@@ -27,9 +37,6 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    console.log('[CLIENT] Submitting', mode, 'form');
-    console.log('[CLIENT] API URL:', process.env.NEXT_PUBLIC_API_URL);
-
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const endpoint = mode === 'signin' ? '/auth/login' : '/auth/register';
@@ -42,8 +49,6 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
         body.accountName = formData.get('accountName') as string;
       }
 
-      console.log('[CLIENT] Making fetch to:', `${apiUrl}${endpoint}`);
-
       const response = await fetch(`${apiUrl}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -51,30 +56,35 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
         body: JSON.stringify(body),
       });
 
-      console.log('[CLIENT] Response status:', response.status);
       const data = await response.json();
-      console.log('[CLIENT] Response data:', data);
 
-      if (mode === 'signin') {
-        if (data.status === 200 && data.token) {
-          // Store token in cookie
-          document.cookie = `auth_token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
-          console.log('[CLIENT] Token stored, redirecting to dashboard');
-          router.push(redirect || '/dashboard');
-        } else {
-          setError(data.message || 'Invalid credentials');
+      if ((mode === 'signin' && data.status === 200) || (mode === 'signup' && data.status === 201)) {
+        if (data.token) {
+          const sessionRes = await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              user: data.user,
+              userType: data.userType,
+              accounts: data.accounts || [data.account],
+              token: data.token,
+              activeAccountId: data.account?.id || data.accounts?.[0]?.id
+            }),
+          });
+
+          if (sessionRes.ok) {
+            const targetUrl = redirect || getRedirectByRole(data.userType);
+            router.push(targetUrl);
+            router.refresh();
+          } else {
+            setError('Failed to create session');
+          }
         }
       } else {
-        // Sign up
-        if (data.status === 201) {
-          console.log('[CLIENT] Registration successful, redirecting to sign-in');
-          router.push('/sign-in?success=true');
-        } else {
-          setError(data.message || 'Registration failed');
-        }
+        setError(data.message || 'Authentication failed');
       }
     } catch (err) {
-      console.error('[CLIENT] Error:', err);
+      console.error('Auth error:', err);
       setError('Connection error. Please try again.');
     } finally {
       setPending(false);
@@ -82,169 +92,181 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <CircleIcon className="h-12 w-12 text-orange-500" />
-        </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          {mode === 'signin'
-            ? 'Sign in to your account'
-            : 'Create your account'}
-        </h2>
-      </div>
+    <div className="min-h-screen flex">
+      {/* Left side - Form */}
+      <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
+        <div className="mx-auto w-full max-w-sm">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 mb-8">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-2xl font-semibold text-gray-900">EZDocu</span>
+          </Link>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          <input type="hidden" name="redirect" value={redirect || ''} />
-          <input type="hidden" name="priceId" value={priceId || ''} />
-          <input type="hidden" name="inviteId" value={inviteId || ''} />
-          {mode === 'signup' && (
-            <>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <Label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                    First Name
-                  </Label>
-                  <div className="mt-1">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-2xl font-semibold text-gray-900">
+              {mode === 'signin' ? 'Welcome back' : 'Create your account'}
+            </h1>
+            <p className="text-gray-500 mt-2">
+              {mode === 'signin'
+                ? 'Sign in to continue to your dashboard'
+                : 'Start your free trial today'}
+            </p>
+          </div>
+
+          {success && (
+            <div className="mb-6 flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+              <CheckCircle className="w-4 h-4" />
+              Account created successfully! Please sign in.
+            </div>
+          )}
+
+          {/* Form */}
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            {mode === 'signup' && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+                      First name
+                    </Label>
                     <Input
                       id="firstName"
                       name="firstName"
                       type="text"
                       required
-                      className="appearance-none rounded-full relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                      className="mt-1.5 h-11 rounded-lg border-gray-200 focus:border-gray-900 focus:ring-gray-900"
                       placeholder="Jane"
                     />
                   </div>
-                </div>
-                <div className="flex-1">
-                  <Label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                    Last Name
-                  </Label>
-                  <div className="mt-1">
+                  <div>
+                    <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                      Last name
+                    </Label>
                     <Input
                       id="lastName"
                       name="lastName"
                       type="text"
                       required
-                      className="appearance-none rounded-full relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                      className="mt-1.5 h-11 rounded-lg border-gray-200 focus:border-gray-900 focus:ring-gray-900"
                       placeholder="Doe"
                     />
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="accountName" className="block text-sm font-medium text-gray-700">
-                  Company / Organization Name
-                </Label>
-                <div className="mt-1">
+                <div>
+                  <Label htmlFor="accountName" className="text-sm font-medium text-gray-700">
+                    Company name
+                  </Label>
                   <Input
                     id="accountName"
                     name="accountName"
                     type="text"
                     required
-                    className="appearance-none rounded-full relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                    className="mt-1.5 h-11 rounded-lg border-gray-200 focus:border-gray-900 focus:ring-gray-900"
                     placeholder="Acme Translations LLC"
                   />
                 </div>
-              </div>
-            </>
-          )}
+              </>
+            )}
 
-          <div>
-            <Label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email
-            </Label>
-            <div className="mt-1">
+            <div>
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                Email address
+              </Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
                 autoComplete="email"
                 required
-                maxLength={50}
-                className="appearance-none rounded-full relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your email"
+                className="mt-1.5 h-11 rounded-lg border-gray-200 focus:border-gray-900 focus:ring-gray-900"
+                placeholder="you@example.com"
               />
             </div>
-          </div>
 
-          <div>
-            <Label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </Label>
-            <div className="mt-1">
+            <div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  Password
+                </Label>
+                {mode === 'signin' && (
+                  <Link href="/forgot-password" className="text-sm text-gray-500 hover:text-gray-900">
+                    Forgot password?
+                  </Link>
+                )}
+              </div>
               <Input
                 id="password"
                 name="password"
                 type="password"
-                autoComplete={
-                  mode === 'signin' ? 'current-password' : 'new-password'
-                }
+                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
                 required
                 minLength={8}
-                maxLength={100}
-                className="appearance-none rounded-full relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
-                placeholder="Enter your password"
+                className="mt-1.5 h-11 rounded-lg border-gray-200 focus:border-gray-900 focus:ring-gray-900"
+                placeholder={mode === 'signin' ? 'Enter your password' : 'Min. 8 characters'}
               />
             </div>
-          </div>
 
-          {error && (
-            <div className="text-red-500 text-sm">{error}</div>
-          )}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
 
-          <div>
             <Button
               type="submit"
-              className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+              className="w-full h-11 bg-gray-900 hover:bg-gray-800 text-white rounded-lg font-medium"
               disabled={pending}
             >
               {pending ? (
                 <>
                   <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                  Loading...
+                  {mode === 'signin' ? 'Signing in...' : 'Creating account...'}
                 </>
-              ) : mode === 'signin' ? (
-                'Sign in'
               ) : (
-                'Sign up'
+                mode === 'signin' ? 'Sign in' : 'Create account'
               )}
             </Button>
-          </div>
-        </form>
+          </form>
 
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-50 text-gray-500">
-                {mode === 'signin'
-                  ? 'New to our platform?'
-                  : 'Already have an account?'}
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6">
+          {/* Footer link */}
+          <p className="mt-8 text-center text-sm text-gray-500">
+            {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
             <Link
-              href={`${mode === 'signin' ? '/sign-up' : '/sign-in'}${redirect ? `?redirect=${redirect}` : ''
-                }${priceId ? `&priceId=${priceId}` : ''}`}
-              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+              href={mode === 'signin' ? '/sign-up' : '/sign-in'}
+              className="font-medium text-gray-900 hover:underline"
             >
-              {mode === 'signin'
-                ? 'Create an account'
-                : 'Sign in to existing account'}
+              {mode === 'signin' ? 'Sign up' : 'Sign in'}
             </Link>
+          </p>
+        </div>
+      </div>
+
+      {/* Right side - Decorative */}
+      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-gray-900 to-gray-800 items-center justify-center p-12">
+        <div className="max-w-md text-center">
+          <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-8">
+            <FileText className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-3xl font-semibold text-white mb-4">
+            Professional document translation
+          </h2>
+          <p className="text-gray-400 text-lg leading-relaxed">
+            AI-powered OCR and translation platform for certified translators.
+            Full control, audit trails, and legal compliance built-in.
+          </p>
+          <div className="mt-8 flex justify-center gap-6 text-sm text-gray-400">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-400" />
+              <span>USCIS Compliant</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-400" />
+              <span>SOC 2 Security</span>
+            </div>
           </div>
         </div>
       </div>

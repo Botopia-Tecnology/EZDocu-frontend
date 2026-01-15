@@ -1,33 +1,38 @@
-import { compare, hash } from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-export interface NewUser {
-  id: number | string;
+export type UserType = 'admin' | 'translator' | 'member';
+
+export interface AccountInfo {
+  id: string;
+  name: string;
+  role: string;
+}
+
+export interface SessionUser {
+  id: string;
   email: string;
   firstName?: string;
   lastName?: string;
-  name?: string;
-  teamId?: number | string;
 }
 
-// ... imports remain ... //
-
-type SessionData = {
-  user: NewUser;
+export interface SessionData {
+  user: SessionUser;
+  userType: UserType;
+  accounts: AccountInfo[];
+  activeAccountId?: string;
   accessToken?: string;
   expires: string;
-};
+}
 
-// Validate AUTH_SECRET exists and is not empty
 const authSecret = process.env.AUTH_SECRET;
 if (!authSecret || authSecret.length === 0) {
-  throw new Error('AUTH_SECRET environment variable is not set or is empty. Please check your .env file.');
+  throw new Error('AUTH_SECRET environment variable is not set or is empty.');
 }
 const key = new TextEncoder().encode(authSecret);
 
 export async function signToken(payload: SessionData) {
-  return await new SignJWT(payload)
+  return await new SignJWT(payload as unknown as Record<string, unknown>)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('1 day from now')
@@ -41,14 +46,23 @@ export async function verifyToken(input: string) {
   return payload as unknown as SessionData;
 }
 
-
-export async function getSession() {
+export async function getSession(): Promise<SessionData | null> {
   const session = (await cookies()).get('session')?.value;
   if (!session) return null;
-  return await verifyToken(session);
+  try {
+    return await verifyToken(session);
+  } catch {
+    return null;
+  }
 }
 
-export async function setSession(user: NewUser, accessToken?: string) {
+export async function setSession(
+  user: SessionUser,
+  userType: UserType,
+  accounts: AccountInfo[],
+  accessToken?: string,
+  activeAccountId?: string
+) {
   const expiresInOneDay = new Date(Date.now() + 24 * 60 * 60 * 1000);
   const session: SessionData = {
     user: {
@@ -56,9 +70,10 @@ export async function setSession(user: NewUser, accessToken?: string) {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      name: user.name,
-      teamId: user.teamId
     },
+    userType,
+    accounts,
+    activeAccountId: activeAccountId || accounts[0]?.id,
     accessToken,
     expires: expiresInOneDay.toISOString(),
   };
@@ -69,4 +84,8 @@ export async function setSession(user: NewUser, accessToken?: string) {
     secure: true,
     sameSite: 'lax',
   });
+}
+
+export async function clearSession() {
+  (await cookies()).delete('session');
 }

@@ -2,19 +2,16 @@
 
 import { redirect } from 'next/navigation';
 import { createCheckoutSession, createCustomerPortalSession, Team } from './stripe';
-import { validatedActionWithUser } from '@/lib/auth/middleware';
-import { z } from 'zod';
+import { getSession } from '@/lib/auth/session';
 
-const checkoutSchema = z.object({
-  priceId: z.string(),
-});
+export async function checkoutAction(priceId: string) {
+  const session = await getSession();
+  if (!session) {
+    redirect('/sign-in');
+  }
 
-export const checkoutAction = validatedActionWithUser(checkoutSchema, async (data, formData, user) => {
-  const { priceId } = data;
-
-  // Construct a minimal Team object with just the ID (which is all the backend needs)
   const team: Team = {
-    id: user.teamId as number,
+    id: parseInt(session.activeAccountId || '0'),
     stripeCustomerId: null,
     stripeProductId: null,
     planName: null,
@@ -22,24 +19,25 @@ export const checkoutAction = validatedActionWithUser(checkoutSchema, async (dat
   };
 
   await createCheckoutSession({ team, priceId });
-  return {};
-});
+}
 
-const portalSchema = z.object({});
+export async function customerPortalAction() {
+  const session = await getSession();
+  if (!session) {
+    redirect('/sign-in');
+  }
 
-export const customerPortalAction = validatedActionWithUser(portalSchema, async (_, __, user) => {
   const team: Team = {
-    id: user.teamId as number,
+    id: parseInt(session.activeAccountId || '0'),
     stripeCustomerId: null,
     stripeProductId: null,
     planName: null,
     subscriptionStatus: null
   };
+
   const portalSession = await createCustomerPortalSession(team);
   if (portalSession?.url) {
     redirect(portalSession.url);
-  } else {
-    redirect('/pricing');
   }
-  return {};
-});
+  redirect('/pricing');
+}
