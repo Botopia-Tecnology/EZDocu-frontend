@@ -1,7 +1,7 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-export type UserType = 'admin' | 'translator' | 'member';
+export type UserType = 'admin' | 'team' | 'member';
 
 export interface AccountInfo {
   id: string;

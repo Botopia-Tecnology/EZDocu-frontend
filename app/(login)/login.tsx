@@ -8,12 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FileText, Loader2, CheckCircle } from 'lucide-react';
 
-type UserType = 'admin' | 'translator' | 'member';
+type UserType = 'admin' | 'team' | 'member';
 
 function getRedirectByRole(userType: UserType): string {
   switch (userType) {
     case 'admin': return '/admin';
-    case 'translator': return '/dashboard';
+    case 'team': return '/dashboard';
     case 'member': return '/workspace';
     default: return '/dashboard';
   }
@@ -60,12 +60,15 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
 
       if ((mode === 'signin' && data.status === 200) || (mode === 'signup' && data.status === 201)) {
         if (data.token) {
+          // Backend sends roleName (admin, team, member)
+          const userType = data.user?.roleName || data.roleName || 'member';
+
           const sessionRes = await fetch('/api/auth/session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               user: data.user,
-              userType: data.userType,
+              userType,
               accounts: data.accounts || [data.account],
               token: data.token,
               activeAccountId: data.account?.id || data.accounts?.[0]?.id
@@ -73,7 +76,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
           });
 
           if (sessionRes.ok) {
-            const targetUrl = redirect || getRedirectByRole(data.userType);
+            const targetUrl = redirect || getRedirectByRole(userType as UserType);
             router.push(targetUrl);
             router.refresh();
           } else {

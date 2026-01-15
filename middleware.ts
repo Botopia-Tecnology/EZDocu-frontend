@@ -7,7 +7,7 @@ const PUBLIC_ROUTES = ['/', '/sign-in', '/sign-up', '/pricing'];
 function getRedirectByRole(userType: string): string {
   switch (userType) {
     case 'admin': return '/admin';
-    case 'translator': return '/dashboard';
+    case 'team': return '/dashboard';
     case 'member': return '/workspace';
     default: return '/dashboard';
   }
@@ -27,11 +27,11 @@ function canAccessRoute(pathname: string, session: SessionData | null): boolean 
   }
 
   if (pathname.startsWith('/dashboard')) {
-    return userType === 'admin' || userType === 'translator';
+    return userType === 'admin' || userType === 'team';
   }
 
   if (pathname.startsWith('/workspace')) {
-    return ['admin', 'translator', 'member'].includes(userType);
+    return ['admin', 'team', 'member'].includes(userType);
   }
 
   return true;
