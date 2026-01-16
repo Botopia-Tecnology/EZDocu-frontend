@@ -11,22 +11,26 @@ interface AnimationContainerProps {
 
 export function AnimationContainer({ children, className, reverse, delay = 0 }: AnimationContainerProps) {
     const ref = useRef<HTMLDivElement>(null);
-    const [isVisible, setIsVisible] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
+    const [isVisible, setIsVisible] = useState(true); // Start visible
+    const [shouldAnimate, setShouldAnimate] = useState(false);
 
     useEffect(() => {
-        // Check if mobile
-        const checkMobile = () => setIsMobile(window.innerWidth < 768);
-        checkMobile();
-
-        // On mobile, show content immediately
-        if (window.innerWidth < 768) {
-            setIsVisible(true);
-            return;
-        }
+        // Only animate on desktop
+        if (window.innerWidth < 768) return;
 
         const el = ref.current;
         if (!el) return;
+
+        // Check if already in viewport
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight) {
+            // Already visible, no animation
+            return;
+        }
+
+        // Not in viewport, will animate
+        setShouldAnimate(true);
+        setIsVisible(false);
 
         const observer = new IntersectionObserver(
             ([entry]) => {
@@ -42,24 +46,15 @@ export function AnimationContainer({ children, className, reverse, delay = 0 }: 
         return () => observer.disconnect();
     }, []);
 
-    // On mobile, no animation - show immediately
-    if (isMobile) {
-        return (
-            <div ref={ref} className={className}>
-                {children}
-            </div>
-        );
-    }
-
     return (
         <div
             ref={ref}
             className={className}
-            style={{
+            style={shouldAnimate ? {
                 opacity: isVisible ? 1 : 0,
                 transform: isVisible ? 'translateY(0)' : `translateY(${reverse ? '-20px' : '20px'})`,
                 transition: `opacity 0.5s ease-out ${delay}s, transform 0.5s ease-out ${delay}s`,
-            }}
+            } : undefined}
         >
             {children}
         </div>
