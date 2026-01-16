@@ -11,6 +11,8 @@ import { BorderBeam } from '@/components/ui/border-beam';
 import { TextHoverEffect } from '@/components/ui/text-hover-effect';
 import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
 import { Input } from '@/components/ui/input';
+import WorldMap from '@/components/ui/world-map';
+import { motion } from 'framer-motion';
 import {
   FileText,
   Languages,
@@ -808,45 +810,80 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 relative overflow-hidden">
-        {/* Aurora Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-violet-800 to-purple-900">
-          {/* Aurora Effects */}
-          <div className="absolute inset-0 opacity-60">
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-400 rounded-full blur-[120px] animate-pulse" />
-            <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-violet-500 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-fuchsia-400 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '2s' }} />
+      {/* CTA Section with World Map */}
+      <section className="relative overflow-hidden">
+        {/* Background with Map */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-violet-800 to-purple-900" />
+
+        {/* World Map as Background */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-[80%] max-w-5xl h-full">
+            <WorldMap
+              lineColor="#c4b5fd"
+              darkMode={true}
+              dots={[
+                {
+                  start: { lat: 40.7128, lng: -74.006 }, // New York
+                  end: { lat: 51.5074, lng: -0.1278 }, // London
+                },
+                {
+                  start: { lat: 51.5074, lng: -0.1278 }, // London
+                  end: { lat: 48.8566, lng: 2.3522 }, // Paris
+                },
+                {
+                  start: { lat: 34.0522, lng: -118.2437 }, // Los Angeles
+                  end: { lat: 19.4326, lng: -99.1332 }, // Mexico City
+                },
+                {
+                  start: { lat: 19.4326, lng: -99.1332 }, // Mexico City
+                  end: { lat: -23.5505, lng: -46.6333 }, // Sao Paulo
+                },
+                {
+                  start: { lat: 48.8566, lng: 2.3522 }, // Paris
+                  end: { lat: 55.7558, lng: 37.6173 }, // Moscow
+                },
+                {
+                  start: { lat: 55.7558, lng: 37.6173 }, // Moscow
+                  end: { lat: 35.6762, lng: 139.6503 }, // Tokyo
+                },
+              ]}
+            />
           </div>
-          {/* Subtle Grid Overlay */}
-          <div
-            className="absolute inset-0 opacity-10"
-            style={{
-              backgroundImage: `
-                linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
-              `,
-              backgroundSize: '40px 40px',
-            }}
-          />
         </div>
-        <div className="max-w-4xl mx-auto relative z-10">
-          <AnimationContainer delay={0.1}>
-            <div className="flex flex-col items-center justify-center text-center">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                Ready to transform your workflow?
-              </h2>
-              <p className="text-purple-100 max-w-md mx-auto text-lg mb-8">
-                Join thousands of certified translators who save hours every week with EZDocu.
-              </p>
-              <Link href="/sign-up">
-                <Button size="lg" className="bg-white hover:bg-gray-100 text-purple-900 rounded-full px-8 h-12 font-semibold shadow-lg">
-                  Start your free trial
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
-          </AnimationContainer>
+
+        {/* Content overlay */}
+        <div className="relative z-10 py-28">
+          <div className="max-w-4xl mx-auto px-4">
+            <AnimationContainer delay={0.1}>
+              <div className="flex flex-col items-center justify-center text-center">
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
+                  Trusted{" "}
+                  <span className="text-purple-200">
+                    {"Worldwide".split("").map((letter, idx) => (
+                      <motion.span
+                        key={idx}
+                        className="inline-block"
+                        initial={{ x: -10, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ duration: 0.5, delay: idx * 0.04 }}
+                      >
+                        {letter}
+                      </motion.span>
+                    ))}
+                  </span>
+                </h2>
+                <p className="text-purple-100 max-w-md mx-auto text-lg mb-6">
+                  Join thousands of certified translators who save hours every week with EZDocu.
+                </p>
+                <Link href="/sign-up">
+                  <Button size="lg" className="bg-white hover:bg-gray-100 text-purple-900 rounded-full px-8 h-12 font-semibold shadow-lg">
+                    Start your free trial
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+            </AnimationContainer>
+          </div>
         </div>
       </section>
 
