@@ -8,17 +8,15 @@ import { Button } from '@/components/ui/button';
 import { AnimationContainer } from '@/components/ui/animation-container';
 import { MagicBadge } from '@/components/ui/magic-badge';
 import { MagicCard } from '@/components/ui/magic-card';
-import { BorderBeam } from '@/components/ui/border-beam';
-import { TextHoverEffect } from '@/components/ui/text-hover-effect';
-import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
 import { Input } from '@/components/ui/input';
-import { motion } from 'framer-motion';
 
-// Lazy load WorldMap to improve initial page load performance
-const WorldMap = dynamic(() => import('@/components/ui/world-map'), {
-  ssr: false,
-  loading: () => <div className="w-full h-full min-h-[200px] md:min-h-[300px]" />
-});
+// Lazy load heavy components that use framer-motion
+const BorderBeam = dynamic(() => import('@/components/ui/border-beam').then(m => ({ default: m.BorderBeam })), { ssr: false });
+const TextHoverEffect = dynamic(() => import('@/components/ui/text-hover-effect').then(m => ({ default: m.TextHoverEffect })), { ssr: false });
+const BentoGrid = dynamic(() => import('@/components/ui/bento-grid').then(m => ({ default: m.BentoGrid })), { ssr: false });
+const BentoCard = dynamic(() => import('@/components/ui/bento-grid').then(m => ({ default: m.BentoCard })), { ssr: false });
+const WorldMap = dynamic(() => import('@/components/ui/world-map'), { ssr: false });
+
 import {
   FileText,
   Languages,
@@ -976,19 +974,7 @@ export default function Home() {
               <div className="flex flex-col items-center justify-center text-center">
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
                   Trusted{" "}
-                  <span className="text-purple-200">
-                    {"Worldwide".split("").map((letter, idx) => (
-                      <motion.span
-                        key={idx}
-                        className="inline-block"
-                        initial={{ x: -10, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ duration: 0.5, delay: idx * 0.04 }}
-                      >
-                        {letter}
-                      </motion.span>
-                    ))}
-                  </span>
+                  <span className="text-purple-200">Worldwide</span>
                 </h2>
                 <p className="text-purple-100 max-w-md mx-auto text-lg mb-6">
                   Join thousands of certified translators who save hours every week with EZDocu.
