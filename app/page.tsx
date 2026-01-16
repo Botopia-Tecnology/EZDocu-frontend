@@ -107,19 +107,37 @@ export default function Home() {
 
             <div className="hidden md:flex items-center gap-8">
               <button
-                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => {
+                  const el = document.getElementById('features');
+                  if (el) {
+                    const top = el.getBoundingClientRect().top + window.scrollY - 80;
+                    window.scrollTo({ top, behavior: 'smooth' });
+                  }
+                }}
                 className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
               >
                 Features
               </button>
               <button
-                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => {
+                  const el = document.getElementById('how-it-works');
+                  if (el) {
+                    const top = el.getBoundingClientRect().top + window.scrollY - 80;
+                    window.scrollTo({ top, behavior: 'smooth' });
+                  }
+                }}
                 className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
               >
                 How it works
               </button>
               <button
-                onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => {
+                  const el = document.getElementById('pricing');
+                  if (el) {
+                    const top = el.getBoundingClientRect().top + window.scrollY - 80;
+                    window.scrollTo({ top, behavior: 'smooth' });
+                  }
+                }}
                 className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
               >
                 Pricing

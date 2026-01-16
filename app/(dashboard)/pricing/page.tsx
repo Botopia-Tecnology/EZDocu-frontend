@@ -2,8 +2,8 @@ import { CheckoutForm } from './checkout-form';
 import { Check } from 'lucide-react';
 import { getStripePrices, getStripeProducts } from '@/lib/payments/stripe';
 
-// Prices are fresh for one hour max
-export const revalidate = 3600;
+// Force dynamic rendering - don't try to fetch during build
+export const dynamic = 'force-dynamic';
 
 export default async function PricingPage() {
   const [prices, products] = await Promise.all([
