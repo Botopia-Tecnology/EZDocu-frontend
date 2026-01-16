@@ -933,9 +933,9 @@ export default function Home() {
         {/* Background with Map */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-violet-800 to-purple-900" />
 
-        {/* World Map as Background */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-full md:w-[80%] max-w-5xl h-full">
+        {/* World Map as Background - Hidden on mobile for performance */}
+        <div className="absolute inset-0 hidden md:flex items-center justify-center">
+          <div className="w-[80%] max-w-5xl h-full">
             <WorldMap
               lineColor="#c4b5fd"
               darkMode={true}
