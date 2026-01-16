@@ -97,64 +97,68 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white overflow-x-hidden scrollbar-hide">
-      {/* Navigation */}
-      <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center gap-2">
-              <Image src="https://res.cloudinary.com/drsvq4tm6/image/upload/v1768539883/Disen%CC%83o_sin_ti%CC%81tulo_2_tbvifi.png" alt="EZDocu" width={120} height={32} className="h-8 w-auto" />
-            </Link>
-
-            <div className="hidden md:flex items-center gap-8">
-              <button
-                onClick={() => {
-                  const el = document.getElementById('features');
-                  if (el) {
-                    const top = el.getBoundingClientRect().top + window.scrollY - 80;
-                    window.scrollTo({ top, behavior: 'smooth' });
-                  }
-                }}
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Features
-              </button>
-              <button
-                onClick={() => {
-                  const el = document.getElementById('how-it-works');
-                  if (el) {
-                    const top = el.getBoundingClientRect().top + window.scrollY - 80;
-                    window.scrollTo({ top, behavior: 'smooth' });
-                  }
-                }}
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                How it works
-              </button>
-              <button
-                onClick={() => {
-                  const el = document.getElementById('pricing');
-                  if (el) {
-                    const top = el.getBoundingClientRect().top + window.scrollY - 80;
-                    window.scrollTo({ top, behavior: 'smooth' });
-                  }
-                }}
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Pricing
-              </button>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Link href="/sign-in">
-                <Button variant="ghost" size="sm" className="text-gray-600">
-                  Log in
-                </Button>
+      {/* Navigation - Floating Header like Parley */}
+      <nav className="fixed w-full z-50 pt-6 px-6 md:px-10 lg:px-16">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-purple-100 rounded-2xl px-6">
+            <div className="flex justify-between items-center h-16">
+              {/* Logo + Name */}
+              <Link href="/" className="flex items-center gap-2">
+                <Image src="https://res.cloudinary.com/drsvq4tm6/image/upload/v1768539883/Disen%CC%83o_sin_ti%CC%81tulo_2_tbvifi.png" alt="EZDocu" width={36} height={36} className="h-9 w-9" />
+                <span className="text-xl font-semibold text-gray-900">EZDocu</span>
               </Link>
-              <Link href="/sign-up">
-                <Button size="sm" className="bg-gray-900 hover:bg-gray-800 text-white rounded-full px-4">
-                  Get started
-                </Button>
-              </Link>
+
+              {/* Right side: Nav + Buttons */}
+              <div className="hidden md:flex items-center gap-6">
+                <button
+                  onClick={() => {
+                    const el = document.getElementById('features');
+                    if (el) {
+                      const top = el.getBoundingClientRect().top + window.scrollY - 80;
+                      window.scrollTo({ top, behavior: 'smooth' });
+                    }
+                  }}
+                  className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Features
+                </button>
+                <button
+                  onClick={() => {
+                    const el = document.getElementById('how-it-works');
+                    if (el) {
+                      const top = el.getBoundingClientRect().top + window.scrollY - 80;
+                      window.scrollTo({ top, behavior: 'smooth' });
+                    }
+                  }}
+                  className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  How it works
+                </button>
+                <button
+                  onClick={() => {
+                    const el = document.getElementById('pricing');
+                    if (el) {
+                      const top = el.getBoundingClientRect().top + window.scrollY - 80;
+                      window.scrollTo({ top, behavior: 'smooth' });
+                    }
+                  }}
+                  className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Pricing
+                </button>
+
+                <Link href="/sign-in">
+                  <Button variant="outline" size="sm" className="text-gray-700 border-gray-300 bg-white hover:bg-gray-50 rounded-lg ml-2">
+                    Log in
+                  </Button>
+                </Link>
+                <Link href="/sign-up">
+                  <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-4">
+                    Get started
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -289,22 +293,22 @@ export default function Home() {
       </section>
 
       {/* Features Section - Bento Grid */}
-      <section id="features" className="py-12 px-4 bg-white">
+      <section id="features" className="py-8 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <AnimationContainer delay={0.1}>
-            <div className="flex flex-col w-full items-center justify-center py-4">
+            <div className="flex flex-col w-full items-center justify-center py-2">
               <MagicBadge title="Features" />
-              <h2 className="text-center text-3xl md:text-5xl !leading-[1.1] font-bold text-gray-900 mt-6">
+              <h2 className="text-center text-2xl md:text-4xl !leading-[1.1] font-bold text-gray-900 mt-4">
                 Everything you need for professional translation
               </h2>
-              <p className="mt-4 text-center text-lg text-gray-600 max-w-lg">
+              <p className="mt-3 text-center text-base text-gray-600 max-w-lg">
                 Built specifically for certified translators and legal professionals
               </p>
             </div>
           </AnimationContainer>
 
           <AnimationContainer delay={0.2}>
-            <BentoGrid className="py-4">
+            <BentoGrid className="py-2">
               {/* Smart OCR Card */}
               <BentoCard
                 name="Smart OCR"
@@ -483,10 +487,10 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-12 px-4 bg-white">
+      <section id="pricing" className="py-6 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <AnimationContainer delay={0.1}>
-            <div className="flex flex-col items-center justify-center w-full py-4 max-w-xl mx-auto">
+            <div className="flex flex-col items-center justify-center w-full py-2 max-w-xl mx-auto">
               <MagicBadge title="Simple Pricing" />
               <h2 className="text-center text-3xl md:text-5xl !leading-[1.1] font-bold text-gray-900 mt-6">
                 Choose a plan that works for you
@@ -524,7 +528,7 @@ export default function Home() {
           <AnimationContainer delay={0.2}>
             <div className="grid md:grid-cols-3 gap-6 py-4">
               {/* Free Plan */}
-              <div className="relative rounded-2xl border border-gray-200 bg-white p-8 transition-all hover:shadow-lg hover:border-gray-300">
+              <div className="relative rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:shadow-lg hover:border-gray-300 flex flex-col h-full">
                 <div className="mb-6">
                   <h3 className="text-xl font-semibold text-gray-900">Free</h3>
                   <p className="text-sm text-gray-500 mt-1">For most individuals</p>
@@ -532,7 +536,7 @@ export default function Home() {
                 <div className="flex items-baseline gap-1 mb-6">
                   <span className="text-5xl font-bold text-gray-900">$0</span>
                 </div>
-                <ul className="space-y-4 text-sm text-gray-600 mb-8">
+                <ul className="space-y-4 text-sm text-gray-600 flex-1">
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
                     5 pages per month
@@ -554,7 +558,7 @@ export default function Home() {
                     Basic certificates
                   </li>
                 </ul>
-                <Link href="/sign-up">
+                <Link href="/sign-up" className="mt-8">
                   <Button variant="outline" className="w-full h-11 rounded-lg border-gray-200">
                     Start for free
                   </Button>
@@ -562,7 +566,7 @@ export default function Home() {
               </div>
 
               {/* Pro Plan - Highlighted */}
-              <div className="relative rounded-2xl border-2 border-purple-500 bg-white p-8 transition-all hover:shadow-xl">
+              <div className="relative rounded-2xl border-2 border-purple-500 bg-white p-6 transition-all hover:shadow-xl flex flex-col h-full">
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="bg-purple-500 text-white text-xs font-medium px-3 py-1 rounded-full">
                     Most Popular
@@ -583,7 +587,7 @@ export default function Home() {
                     </span>
                   )}
                 </div>
-                <ul className="space-y-4 text-sm text-gray-600 mb-8">
+                <ul className="space-y-4 text-sm text-gray-600 flex-1">
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
                     100 pages per month
@@ -609,7 +613,7 @@ export default function Home() {
                     Audit trail
                   </li>
                 </ul>
-                <Link href="/sign-up">
+                <Link href="/sign-up" className="mt-8">
                   <Button className="w-full h-11 rounded-lg bg-purple-600 hover:bg-purple-700 text-white">
                     Get started
                   </Button>
@@ -617,7 +621,7 @@ export default function Home() {
               </div>
 
               {/* Business Plan */}
-              <div className="relative rounded-2xl border border-gray-200 bg-white p-8 transition-all hover:shadow-lg hover:border-gray-300">
+              <div className="relative rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:shadow-lg hover:border-gray-300 flex flex-col h-full">
                 <div className="mb-6">
                   <h3 className="text-xl font-semibold text-gray-900">Business</h3>
                   <p className="text-sm text-gray-500 mt-1">For large organizations</p>
@@ -633,7 +637,7 @@ export default function Home() {
                     </span>
                   )}
                 </div>
-                <ul className="space-y-4 text-sm text-gray-600 mb-8">
+                <ul className="space-y-4 text-sm text-gray-600 flex-1">
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
                     Unlimited pages
@@ -659,7 +663,7 @@ export default function Home() {
                     API access
                   </li>
                 </ul>
-                <Link href="/sign-up">
+                <Link href="/sign-up" className="mt-8">
                   <Button variant="outline" className="w-full h-11 rounded-lg border-gray-200">
                     Contact team
                   </Button>
