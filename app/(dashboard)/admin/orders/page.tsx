@@ -170,7 +170,7 @@ export default async function AdminOrdersPage() {
             <Button variant="outline" size="sm" className="h-8">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" className="h-8 w-8 bg-gray-900 text-white border-gray-900">1</Button>
+            <Button variant="outline" size="sm" className="h-8 w-8 bg-purple-600 text-white border-purple-600">1</Button>
             <Button variant="outline" size="sm" className="h-8 w-8">2</Button>
             <Button variant="outline" size="sm" className="h-8 w-8">3</Button>
             <span className="text-gray-400">...</span>

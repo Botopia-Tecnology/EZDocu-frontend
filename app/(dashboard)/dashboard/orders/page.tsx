@@ -48,7 +48,7 @@ export default async function TranslatorOrdersPage() {
           <p className="text-gray-500 mt-1">Manage your translation orders</p>
         </div>
         <Link href="/dashboard/orders/new">
-          <Button className="bg-gray-900 hover:bg-gray-800 text-white rounded-lg">
+          <Button className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg">
             <Plus className="h-4 w-4 mr-2" />
             New Order
           </Button>
@@ -174,7 +174,7 @@ export default async function TranslatorOrdersPage() {
             <Button variant="outline" size="sm" className="h-8">
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" className="h-8 w-8 bg-gray-900 text-white border-gray-900">1</Button>
+            <Button variant="outline" size="sm" className="h-8 w-8 bg-purple-600 text-white border-purple-600">1</Button>
             <Button variant="outline" size="sm" className="h-8 w-8">2</Button>
             <Button variant="outline" size="sm" className="h-8 w-8">3</Button>
             <span className="text-gray-400">...</span>

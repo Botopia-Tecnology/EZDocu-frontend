@@ -228,7 +228,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
 
             <Button
               type="submit"
-              className="w-full h-12 bg-gray-900 hover:bg-gray-800 text-white rounded-lg font-medium"
+              className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
               disabled={pending}
             >
               {pending ? (

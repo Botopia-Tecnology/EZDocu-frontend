@@ -152,7 +152,7 @@ export default async function MemberOrdersPage() {
                         size="sm"
                         className={order.status === 'completed'
                           ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          : 'bg-gray-900 hover:bg-gray-800 text-white'
+                          : 'bg-purple-600 hover:bg-purple-700 text-white'
                         }
                       >
                         <Play className="h-3.5 w-3.5 mr-1.5" />
@@ -173,7 +173,7 @@ export default async function MemberOrdersPage() {
             <Button variant="outline" size="sm" className="h-8" disabled>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="sm" className="h-8 w-8 bg-gray-900 text-white border-gray-900">1</Button>
+            <Button variant="outline" size="sm" className="h-8 w-8 bg-purple-600 text-white border-purple-600">1</Button>
             <Button variant="outline" size="sm" className="h-8" disabled>
               <ChevronRight className="h-4 w-4" />
             </Button>

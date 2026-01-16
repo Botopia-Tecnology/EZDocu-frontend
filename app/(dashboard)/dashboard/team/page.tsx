@@ -43,7 +43,7 @@ export default async function TranslatorTeamPage() {
           <h1 className="text-2xl font-semibold text-gray-900">Team</h1>
           <p className="text-gray-500 mt-1">Manage your team members and invitations</p>
         </div>
-        <Button className="bg-gray-900 hover:bg-gray-800 text-white rounded-lg">
+        <Button className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg">
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Member
         </Button>

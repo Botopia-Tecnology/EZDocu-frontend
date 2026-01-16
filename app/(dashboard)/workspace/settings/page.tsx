@@ -25,7 +25,7 @@ export default async function MemberSettingsPage() {
           <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
           <p className="text-gray-500 mt-1">Manage your account preferences</p>
         </div>
-        <Button className="bg-gray-900 hover:bg-gray-800 text-white rounded-lg">
+        <Button className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg">
           <Save className="h-4 w-4 mr-2" />
           Save Changes
         </Button>
@@ -104,11 +104,11 @@ export default async function MemberSettingsPage() {
                   </div>
                   <button
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      item.enabled ? 'bg-gray-900' : 'bg-gray-200'
+                      item.enabled ? 'bg-purple-600' : 'bg-gray-200'
                     }`}
                   >
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${
                         item.enabled ? 'translate-x-6' : 'translate-x-1'
                       }`}
                     />

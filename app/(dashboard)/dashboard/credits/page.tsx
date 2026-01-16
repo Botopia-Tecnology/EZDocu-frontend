@@ -97,8 +97,8 @@ export default async function TranslatorCreditsPage() {
                 <Button
                   className={`w-full mt-4 rounded-lg ${
                     pkg.popular
-                      ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                      : 'bg-gray-900 hover:bg-gray-800 text-white'
+                      ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                      : 'bg-purple-600 hover:bg-purple-700 text-white'
                   }`}
                 >
                   Buy Now

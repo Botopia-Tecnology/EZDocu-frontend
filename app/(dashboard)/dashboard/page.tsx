@@ -54,7 +54,7 @@ export default async function TranslatorDashboard() {
           <p className="text-gray-500 mt-1">Here's what's happening with your orders today.</p>
         </div>
         <Link href="/dashboard/orders/new">
-          <Button className="bg-gray-900 hover:bg-gray-800 text-white rounded-lg">
+          <Button className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg">
             <Plus className="h-4 w-4 mr-2" />
             New Order
           </Button>
