@@ -96,7 +96,18 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden scrollbar-hide">
+    <div className="min-h-screen bg-white overflow-x-hidden scrollbar-hide relative">
+      {/* Grid Pattern Background - Base */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(168, 85, 247, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(168, 85, 247, 0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: '40px 40px',
+        }}
+      />
       {/* Navigation - Floating Header like Parley */}
       <nav className="fixed w-full z-50 pt-6 px-6 md:px-10 lg:px-16">
         <div className="max-w-6xl mx-auto">
@@ -445,7 +456,7 @@ export default function Home() {
       </section>
 
       {/* Process Section */}
-      <section id="how-it-works" className="py-12 px-4 bg-gray-50">
+      <section id="how-it-works" className="py-12 px-4 bg-gradient-to-b from-white via-purple-50/50 to-white">
         <div className="max-w-6xl mx-auto">
           <AnimationContainer delay={0.1}>
             <div className="flex flex-col items-center justify-center w-full py-4 max-w-xl mx-auto">
@@ -487,7 +498,7 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-6 px-4 bg-white">
+      <section id="pricing" className="py-6 px-4 bg-gradient-to-b from-white via-purple-50/50 to-white">
         <div className="max-w-6xl mx-auto">
           <AnimationContainer delay={0.1}>
             <div className="flex flex-col items-center justify-center w-full py-2 max-w-xl mx-auto">
