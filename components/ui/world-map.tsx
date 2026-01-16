@@ -44,7 +44,7 @@ export default function WorldMap({
   };
 
   return (
-    <div className="w-full h-full min-h-[300px] rounded-lg relative font-sans">
+    <div className="w-full h-full min-h-[200px] md:min-h-[300px] rounded-lg relative font-sans">
       <img
         src={`data:image/svg+xml;utf8,${encodeURIComponent(svgMap)}`}
         className="h-full w-full object-cover pointer-events-none select-none opacity-40"

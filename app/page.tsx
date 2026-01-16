@@ -34,7 +34,9 @@ import {
   ChevronDown,
   Plus,
   Minus,
-  HelpCircle
+  HelpCircle,
+  Menu,
+  X
 } from 'lucide-react';
 
 const FEATURES = [
@@ -129,6 +131,7 @@ function FaqItem({ question, answer, index }: { question: string; answer: string
 
 export default function Home() {
   const [isYearly, setIsYearly] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const prices = {
     pro: { monthly: 29, yearly: 255 },
@@ -159,7 +162,15 @@ export default function Home() {
                 <span className="text-xl font-semibold text-gray-900">EZDocu</span>
               </Link>
 
-              {/* Right side: Nav + Buttons */}
+              {/* Mobile menu button */}
+              <button
+                className="md:hidden p-2 rounded-lg hover:bg-purple-200 transition-colors"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? <X className="h-6 w-6 text-gray-700" /> : <Menu className="h-6 w-6 text-gray-700" />}
+              </button>
+
+              {/* Right side: Nav + Buttons (Desktop) */}
               <div className="hidden md:flex items-center gap-6">
                 <button
                   onClick={() => {
@@ -223,9 +234,110 @@ export default function Home() {
                 </Link>
               </div>
             </div>
+
           </div>
         </div>
       </nav>
+
+      {/* Mobile Sidebar Overlay */}
+      <div
+        className={`fixed inset-0 bg-black/60 z-[100] md:hidden transition-opacity duration-300 ${mobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setMobileMenuOpen(false)}
+      />
+
+      {/* Mobile Sidebar */}
+      <div className={`fixed top-0 left-0 h-full w-72 bg-gradient-to-b from-purple-900 via-purple-800 to-violet-900 z-[110] transform transition-transform duration-300 ease-in-out md:hidden ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex flex-col h-full p-6">
+          {/* Sidebar Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-2">
+              <Image src="https://res.cloudinary.com/drsvq4tm6/image/upload/v1768539883/Disen%CC%83o_sin_ti%CC%81tulo_2_tbvifi.png" alt="EZDocu" width={32} height={32} className="h-8 w-8" />
+              <span className="text-xl font-semibold text-white">EZDocu</span>
+            </div>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <X className="h-5 w-5 text-white" />
+            </button>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="flex-1 space-y-2">
+            <button
+              onClick={() => {
+                const el = document.getElementById('features');
+                if (el) {
+                  const top = el.getBoundingClientRect().top + window.scrollY - 80;
+                  window.scrollTo({ top, behavior: 'smooth' });
+                }
+                setMobileMenuOpen(false);
+              }}
+              className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3"
+            >
+              <Sparkles className="h-5 w-5" />
+              Features
+            </button>
+            <button
+              onClick={() => {
+                const el = document.getElementById('how-it-works');
+                if (el) {
+                  const top = el.getBoundingClientRect().top + window.scrollY - 80;
+                  window.scrollTo({ top, behavior: 'smooth' });
+                }
+                setMobileMenuOpen(false);
+              }}
+              className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3"
+            >
+              <Eye className="h-5 w-5" />
+              How it works
+            </button>
+            <button
+              onClick={() => {
+                const el = document.getElementById('pricing');
+                if (el) {
+                  const top = el.getBoundingClientRect().top + window.scrollY - 80;
+                  window.scrollTo({ top, behavior: 'smooth' });
+                }
+                setMobileMenuOpen(false);
+              }}
+              className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3"
+            >
+              <CreditCard className="h-5 w-5" />
+              Pricing
+            </button>
+            <button
+              onClick={() => {
+                const el = document.getElementById('faq');
+                if (el) {
+                  const top = el.getBoundingClientRect().top + window.scrollY - 80;
+                  window.scrollTo({ top, behavior: 'smooth' });
+                }
+                setMobileMenuOpen(false);
+              }}
+              className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3"
+            >
+              <HelpCircle className="h-5 w-5" />
+              FAQ
+            </button>
+          </nav>
+
+          {/* Bottom Actions */}
+          <div className="space-y-3 pt-6 border-t border-white/20">
+            <Link href="/sign-in" onClick={() => setMobileMenuOpen(false)} className="block">
+              <Button variant="outline" className="w-full bg-transparent border-white/30 text-white hover:bg-white/10 rounded-xl h-11">
+                Log in
+              </Button>
+            </Link>
+            <Link href="/sign-up" onClick={() => setMobileMenuOpen(false)} className="block">
+              <Button className="w-full bg-white hover:bg-gray-100 text-purple-900 rounded-xl h-11 font-semibold">
+                Get started
+                <ArrowRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
 
       {/* Hero Section */}
       <section className="pt-28 pb-8 px-4">
@@ -817,7 +929,7 @@ export default function Home() {
 
         {/* World Map as Background */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-[80%] max-w-5xl h-full">
+          <div className="w-full md:w-[80%] max-w-5xl h-full">
             <WorldMap
               lineColor="#c4b5fd"
               darkMode={true}
@@ -852,7 +964,7 @@ export default function Home() {
         </div>
 
         {/* Content overlay */}
-        <div className="relative z-10 py-28">
+        <div className="relative z-10 py-20 md:py-28">
           <div className="max-w-4xl mx-auto px-4">
             <AnimationContainer delay={0.1}>
               <div className="flex flex-col items-center justify-center text-center">
