@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import DottedMap from "dotted-map";
 
@@ -19,14 +19,24 @@ export default function WorldMap({
   darkMode = false,
 }: MapProps) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const map = new DottedMap({ height: 100, grid: "diagonal" });
+  const [svgMap, setSvgMap] = useState<string>("");
+  const [isMounted, setIsMounted] = useState(false);
 
-  const svgMap = map.getSVG({
-    radius: 0.22,
-    color: darkMode ? "#FFFFFF40" : "#00000040",
-    shape: "circle",
-    backgroundColor: "transparent",
-  });
+  useEffect(() => {
+    setIsMounted(true);
+    const map = new DottedMap({ height: 100, grid: "diagonal" });
+    const svg = map.getSVG({
+      radius: 0.22,
+      color: darkMode ? "#FFFFFF40" : "#00000040",
+      shape: "circle",
+      backgroundColor: "transparent",
+    });
+    setSvgMap(svg);
+  }, [darkMode]);
+
+  if (!isMounted || !svgMap) {
+    return <div className="w-full h-full min-h-[200px] md:min-h-[300px] rounded-lg relative font-sans" />;
+  }
 
   const projectPoint = (lat: number, lng: number) => {
     const x = (lng + 180) * (800 / 360);
