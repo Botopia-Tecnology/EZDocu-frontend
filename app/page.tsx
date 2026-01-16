@@ -180,7 +180,7 @@ export default function Home() {
                       window.scrollTo({ top, behavior: 'smooth' });
                     }
                   }}
-                  className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                  className="text-sm text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
                 >
                   Features
                 </button>
@@ -192,7 +192,7 @@ export default function Home() {
                       window.scrollTo({ top, behavior: 'smooth' });
                     }
                   }}
-                  className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                  className="text-sm text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
                 >
                   How it works
                 </button>
@@ -204,7 +204,7 @@ export default function Home() {
                       window.scrollTo({ top, behavior: 'smooth' });
                     }
                   }}
-                  className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                  className="text-sm text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
                 >
                   Pricing
                 </button>
@@ -216,7 +216,7 @@ export default function Home() {
                       window.scrollTo({ top, behavior: 'smooth' });
                     }
                   }}
-                  className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                  className="text-sm text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
                 >
                   FAQ
                 </button>
