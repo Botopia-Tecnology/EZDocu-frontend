@@ -28,7 +28,11 @@ import {
   CreditCard,
   Search,
   Globe,
-  Award
+  Award,
+  ChevronDown,
+  Plus,
+  Minus,
+  HelpCircle
 } from 'lucide-react';
 
 const FEATURES = [
@@ -86,6 +90,40 @@ const PROCESS = [
     description: 'Download your translation with certificate attached.'
   }
 ];
+
+// FAQ Accordion Item Component
+function FaqItem({ question, answer, index }: { question: string; answer: string; index: number }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <AnimationContainer delay={0.1 + index * 0.05}>
+      <div
+        className={`bg-white border rounded-2xl overflow-hidden transition-all duration-300 ${
+          isOpen ? 'border-purple-200 shadow-lg shadow-purple-100/50' : 'border-gray-200 hover:border-purple-100'
+        }`}
+      >
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full px-6 py-5 flex items-center justify-between text-left"
+        >
+          <span className="font-medium text-gray-900 pr-4">{question}</span>
+          <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+            isOpen ? 'bg-purple-100 rotate-180' : 'bg-gray-100'
+          }`}>
+            <ChevronDown className={`w-5 h-5 transition-colors ${isOpen ? 'text-purple-600' : 'text-gray-500'}`} />
+          </div>
+        </button>
+        <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+        }`}>
+          <div className="px-6 pb-5 text-gray-600 leading-relaxed">
+            {answer}
+          </div>
+        </div>
+      </div>
+    </AnimationContainer>
+  );
+}
 
 export default function Home() {
   const [isYearly, setIsYearly] = useState(true);
@@ -156,6 +194,18 @@ export default function Home() {
                   className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
                 >
                   Pricing
+                </button>
+                <button
+                  onClick={() => {
+                    const el = document.getElementById('faq');
+                    if (el) {
+                      const top = el.getBoundingClientRect().top + window.scrollY - 80;
+                      window.scrollTo({ top, behavior: 'smooth' });
+                    }
+                  }}
+                  className="text-sm text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  FAQ
                 </button>
 
                 <Link href="/sign-in">
@@ -689,6 +739,70 @@ export default function Home() {
                 <CreditCard className="w-5 h-5" />
                 <span>No credit card required for free plan</span>
               </div>
+            </div>
+          </AnimationContainer>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="py-20 px-4 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <AnimationContainer delay={0.1}>
+            <div className="flex flex-col items-center justify-center w-full mb-8">
+              <MagicBadge title="FAQ" />
+            </div>
+          </AnimationContainer>
+
+          <AnimationContainer delay={0.2}>
+            <div className="max-w-4xl mx-auto space-y-4">
+              {[
+                {
+                  question: "What types of documents can EZDocu translate?",
+                  answer: "EZDocu supports all common document types including birth certificates, marriage certificates, diplomas, transcripts, passports, driver's licenses, legal contracts, and more. We handle both scanned images and digital PDFs with our advanced OCR technology."
+                },
+                {
+                  question: "Are the translations accepted by USCIS and other government agencies?",
+                  answer: "Yes! All translations completed through EZDocu include a Certificate of Translation Accuracy that meets USCIS requirements. Our certified translations are accepted by immigration offices, courts, universities, and government agencies worldwide."
+                },
+                {
+                  question: "How does the AI translation work?",
+                  answer: "Our AI uses advanced language models trained specifically on legal and official document terminology. It provides accurate initial translations that certified translators can then review and finalize. This hybrid approach ensures both speed and accuracy."
+                },
+                {
+                  question: "How long does it take to get a certified translation?",
+                  answer: "Most single-page documents are completed within 24 hours. Complex multi-page documents may take 2-3 business days. We also offer rush processing for urgent requests at an additional fee."
+                },
+                {
+                  question: "Can I edit the translation before finalizing?",
+                  answer: "Absolutely! EZDocu provides a side-by-side editor where you can review the AI-generated translation, make adjustments, and ensure everything is perfect before generating the certified document."
+                },
+                {
+                  question: "What's included in the free plan?",
+                  answer: "The free plan includes 5 pages per month, basic OCR extraction, AI translation assistance, community support, and basic certification. It's perfect for individuals with occasional translation needs."
+                },
+                {
+                  question: "Is my data secure?",
+                  answer: "Yes, security is our top priority. All documents are encrypted in transit and at rest. We're SOC 2 certified and HIPAA compliant. Your documents are automatically deleted after 30 days, or you can delete them immediately after download."
+                },
+                {
+                  question: "Do you offer team or enterprise plans?",
+                  answer: "Yes! Our Business plan includes unlimited pages, team workspaces for up to 5 users, dedicated account management, API access, and custom integrations. Contact our sales team for enterprise pricing with additional features."
+                }
+              ].map((faq, index) => (
+                <FaqItem key={index} question={faq.question} answer={faq.answer} index={index} />
+              ))}
+            </div>
+          </AnimationContainer>
+
+          <AnimationContainer delay={0.3}>
+            <div className="mt-12 text-center">
+              <p className="text-gray-600 mb-4">Still have questions?</p>
+              <Link href="mailto:support@ezdocu.com">
+                <Button variant="outline" className="rounded-lg border-purple-200 text-purple-700 hover:bg-purple-50">
+                  <HelpCircle className="w-4 h-4 mr-2" />
+                  Contact Support
+                </Button>
+              </Link>
             </div>
           </AnimationContainer>
         </div>
