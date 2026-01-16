@@ -1,0 +1,8 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Bottom left square (darkest purple) -->
+  <rect x="2" y="18" width="12" height="12" fill="#7C3AED"/>
+  <!-- Middle square (medium purple) -->
+  <rect x="8" y="10" width="12" height="12" fill="#A855F7"/>
+  <!-- Top right square (lightest purple) -->
+  <rect x="14" y="2" width="12" height="12" fill="#C4B5FD"/>
+</svg>

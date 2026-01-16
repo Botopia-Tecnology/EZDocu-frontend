@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
-  FileText,
   LayoutDashboard,
   Users,
   CreditCard,
@@ -17,7 +17,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-type UserType = 'admin' | 'translator' | 'member';
+type UserType = 'admin' | 'team' | 'member';
 
 interface NavItem {
   label: string;
@@ -33,7 +33,7 @@ const navByRole: Record<UserType, NavItem[]> = {
     { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { label: 'Settings', href: '/admin/settings', icon: Settings },
   ],
-  translator: [
+  team: [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Orders', href: '/dashboard/orders', icon: FileStack },
     { label: 'Team', href: '/dashboard/team', icon: Users },
@@ -55,7 +55,7 @@ interface SidebarProps {
 
 export function Sidebar({ userType, userName, accountName }: SidebarProps) {
   const pathname = usePathname();
-  const navItems = navByRole[userType] || navByRole.translator;
+  const navItems = navByRole[userType] || navByRole.team;
 
   const handleLogout = async () => {
     await fetch('/api/auth/session', { method: 'DELETE' });
@@ -67,10 +67,8 @@ export function Sidebar({ userType, userName, accountName }: SidebarProps) {
       {/* Logo */}
       <div className="h-16 px-6 flex items-center border-b border-gray-100">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-            <FileText className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-semibold text-gray-900">EZDocu</span>
+          <Image src="/icon.svg" alt="" width={28} height={28} className="h-7 w-7" />
+          <span className="text-lg font-semibold text-gray-900">EZDocu</span>
         </Link>
       </div>
 

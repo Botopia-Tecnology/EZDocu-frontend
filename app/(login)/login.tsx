@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FileText, Loader2, CheckCircle } from 'lucide-react';
+import { Loader2, CheckCircle, ArrowLeft } from 'lucide-react';
 
 type UserType = 'admin' | 'team' | 'member';
 
@@ -99,12 +100,15 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
       {/* Left side - Form */}
       <div className="flex-1 flex flex-col justify-center px-4 sm:px-6 lg:px-20 xl:px-24">
         <div className="mx-auto w-full max-w-sm">
+          {/* Back to home */}
+          <Link href="/" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            Back to home
+          </Link>
+
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 mb-8">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-semibold text-gray-900">EZDocu</span>
+            <Image src="https://res.cloudinary.com/drsvq4tm6/image/upload/v1768539883/Disen%CC%83o_sin_ti%CC%81tulo_2_tbvifi.png" alt="EZDocu" width={140} height={36} className="h-9 w-auto" />
           </Link>
 
           {/* Header */}
@@ -249,25 +253,25 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
       </div>
 
       {/* Right side - Decorative */}
-      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-gray-900 to-gray-800 items-center justify-center p-12">
+      <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-purple-600 to-violet-700 items-center justify-center p-12">
         <div className="max-w-md text-center">
-          <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-8">
-            <FileText className="w-8 h-8 text-white" />
+          <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-8">
+            <Image src="https://res.cloudinary.com/drsvq4tm6/image/upload/v1768539883/Disen%CC%83o_sin_ti%CC%81tulo_2_tbvifi.png" alt="EZDocu" width={56} height={56} className="h-14 w-auto brightness-0 invert" />
           </div>
           <h2 className="text-3xl font-semibold text-white mb-4">
             Professional document translation
           </h2>
-          <p className="text-gray-400 text-lg leading-relaxed">
+          <p className="text-purple-100 text-lg leading-relaxed">
             AI-powered OCR and translation platform for certified translators.
             Full control, audit trails, and legal compliance built-in.
           </p>
-          <div className="mt-8 flex justify-center gap-6 text-sm text-gray-400">
+          <div className="mt-8 flex justify-center gap-6 text-sm text-purple-200">
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-400" />
+              <CheckCircle className="w-4 h-4 text-green-300" />
               <span>USCIS Compliant</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-400" />
+              <CheckCircle className="w-4 h-4 text-green-300" />
               <span>SOC 2 Security</span>
             </div>
           </div>

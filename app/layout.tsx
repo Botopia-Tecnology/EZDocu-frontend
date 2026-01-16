@@ -3,8 +3,16 @@ import type { Metadata, Viewport } from 'next';
 import { Manrope } from 'next/font/google';
 
 export const metadata: Metadata = {
-  title: 'EZ DOCU - Professional Document Translation & Certification',
-  description: 'AI-powered OCR and translation platform for certified translators, law firms, and immigration offices.'
+  title: 'EZDocu - Professional Document Translation & Certification',
+  description: 'AI-powered OCR and translation platform for certified translators, law firms, and immigration offices.',
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 export const viewport: Viewport = {

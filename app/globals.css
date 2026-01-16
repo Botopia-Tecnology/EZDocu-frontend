@@ -287,3 +287,48 @@
 .animate-aurora {
   animation: aurora 60s linear infinite;
 }
+
+/* Border beam animation */
+@keyframes border-beam {
+  100% {
+    offset-distance: 100%;
+  }
+}
+
+.animate-border-beam {
+  animation: border-beam calc(var(--duration, 15) * 1s) infinite linear;
+}
+
+/* Image glow animation */
+@keyframes image-glow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-image-glow {
+  animation: image-glow 3s ease-in-out infinite;
+}
+
+/* Gradient animation */
+.gradient {
+  background: conic-gradient(from 230.29deg at 51.63% 52.16%, rgb(139, 92, 246) 0deg, rgb(167, 139, 250) 67.5deg, rgb(196, 181, 253) 198.75deg, rgb(139, 92, 246) 251.25deg, rgb(167, 139, 250) 301.88deg, rgb(139, 92, 246) 360deg);
+}
+
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Selection styling */
+::selection {
+  background-color: rgba(139, 92, 246, 0.2);
+  color: inherit;
+}
