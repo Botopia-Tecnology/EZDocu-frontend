@@ -108,7 +108,7 @@ function FaqItem({ question, answer, index }: { question: string; answer: string
       >
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full px-6 py-5 flex items-center justify-between text-left"
+          className="w-full px-6 py-5 flex items-center justify-between text-left cursor-pointer"
         >
           <span className="font-medium text-gray-900 pr-4">{question}</span>
           <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
@@ -164,7 +164,7 @@ export default function Home() {
 
               {/* Mobile menu button */}
               <button
-                className="md:hidden p-2 rounded-lg hover:bg-purple-200 transition-colors"
+                className="md:hidden p-2 rounded-lg hover:bg-purple-200 transition-colors cursor-pointer"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
                 {mobileMenuOpen ? <X className="h-6 w-6 text-gray-700" /> : <Menu className="h-6 w-6 text-gray-700" />}
@@ -256,7 +256,7 @@ export default function Home() {
             </div>
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
             >
               <X className="h-5 w-5 text-white" />
             </button>
@@ -273,7 +273,7 @@ export default function Home() {
                 }
                 setMobileMenuOpen(false);
               }}
-              className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3"
+              className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3 cursor-pointer"
             >
               <Sparkles className="h-5 w-5" />
               Features
@@ -287,7 +287,7 @@ export default function Home() {
                 }
                 setMobileMenuOpen(false);
               }}
-              className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3"
+              className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3 cursor-pointer"
             >
               <Eye className="h-5 w-5" />
               How it works
@@ -301,7 +301,7 @@ export default function Home() {
                 }
                 setMobileMenuOpen(false);
               }}
-              className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3"
+              className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3 cursor-pointer"
             >
               <CreditCard className="h-5 w-5" />
               Pricing
@@ -315,7 +315,7 @@ export default function Home() {
                 }
                 setMobileMenuOpen(false);
               }}
-              className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3"
+              className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3 cursor-pointer"
             >
               <HelpCircle className="h-5 w-5" />
               FAQ
@@ -678,7 +678,7 @@ export default function Home() {
               <div className="flex items-center gap-1 mt-8 bg-gray-100 p-1 rounded-lg">
                 <button
                   onClick={() => setIsYearly(false)}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all cursor-pointer ${
                     !isYearly
                       ? 'bg-white text-gray-900 shadow-sm'
                       : 'text-gray-500 hover:text-gray-700'
@@ -688,7 +688,7 @@ export default function Home() {
                 </button>
                 <button
                   onClick={() => setIsYearly(true)}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all cursor-pointer ${
                     isYearly
                       ? 'bg-gray-900 text-white shadow-sm'
                       : 'text-gray-500 hover:text-gray-700'
