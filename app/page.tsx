@@ -695,18 +695,38 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-4xl mx-auto">
+      <section className="py-20 px-4 relative overflow-hidden">
+        {/* Aurora Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-violet-800 to-purple-900">
+          {/* Aurora Effects */}
+          <div className="absolute inset-0 opacity-60">
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-400 rounded-full blur-[120px] animate-pulse" />
+            <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-violet-500 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-fuchsia-400 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '2s' }} />
+          </div>
+          {/* Subtle Grid Overlay */}
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              backgroundImage: `
+                linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)
+              `,
+              backgroundSize: '40px 40px',
+            }}
+          />
+        </div>
+        <div className="max-w-4xl mx-auto relative z-10">
           <AnimationContainer delay={0.1}>
             <div className="flex flex-col items-center justify-center text-center">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
                 Ready to transform your workflow?
               </h2>
-              <p className="text-gray-600 max-w-md mx-auto text-lg mb-8">
+              <p className="text-purple-100 max-w-md mx-auto text-lg mb-8">
                 Join thousands of certified translators who save hours every week with EZDocu.
               </p>
               <Link href="/sign-up">
-                <Button size="lg" className="bg-gray-900 hover:bg-gray-800 text-white rounded-full px-8 h-12">
+                <Button size="lg" className="bg-white hover:bg-gray-100 text-purple-900 rounded-full px-8 h-12 font-semibold shadow-lg">
                   Start your free trial
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
