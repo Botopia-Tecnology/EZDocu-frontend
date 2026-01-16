@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import { AnimationContainer } from '@/components/ui/animation-container';
 import { MagicBadge } from '@/components/ui/magic-badge';
@@ -11,8 +12,13 @@ import { BorderBeam } from '@/components/ui/border-beam';
 import { TextHoverEffect } from '@/components/ui/text-hover-effect';
 import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
 import { Input } from '@/components/ui/input';
-import WorldMap from '@/components/ui/world-map';
 import { motion } from 'framer-motion';
+
+// Lazy load WorldMap to improve initial page load performance
+const WorldMap = dynamic(() => import('@/components/ui/world-map'), {
+  ssr: false,
+  loading: () => <div className="w-full h-full min-h-[200px] md:min-h-[300px]" />
+});
 import {
   FileText,
   Languages,
