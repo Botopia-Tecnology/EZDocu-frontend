@@ -39,7 +39,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
     const password = formData.get('password') as string;
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
       const endpoint = mode === 'signin' ? '/auth/login' : '/auth/register';
 
       const body: Record<string, string> = { email, password };
