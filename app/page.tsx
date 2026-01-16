@@ -106,15 +106,24 @@ export default function Home() {
             </Link>
 
             <div className="hidden md:flex items-center gap-8">
-              <Link href="#features" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+              <button
+                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
                 Features
-              </Link>
-              <Link href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+              </button>
+              <button
+                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
                 How it works
-              </Link>
-              <Link href="#pricing" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+              </button>
+              <button
+                onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
                 Pricing
-              </Link>
+              </button>
             </div>
 
             <div className="flex items-center gap-3">
