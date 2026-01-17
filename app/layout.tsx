@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Manrope } from 'next/font/google';
+import { ClarityScript } from '@/components/analytics/ClarityScript';
 
 export const metadata: Metadata = {
   title: 'EZDocu - Professional Document Translation & Certification',
@@ -29,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`bg-white dark:bg-gray-950 ${manrope.className}`}>
       <body className="min-h-[100dvh] bg-gray-50">
+        <ClarityScript />
         {children}
       </body>
     </html>
