@@ -252,7 +252,8 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
               {mode === 'signin' ? 'Sign up' : 'Sign in'}
             </Link>
           </p>
-          </div>
+
+                    </div>
         </div>
       </div>
 
