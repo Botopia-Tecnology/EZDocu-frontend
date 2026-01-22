@@ -14,7 +14,11 @@ import {
   LogOut,
   Building2,
   ClipboardList,
-  ChevronRight
+  ChevronRight,
+  ScrollText,
+  FileText,
+  ToggleRight,
+  Award
 } from 'lucide-react';
 
 type UserType = 'admin' | 'team' | 'member';
@@ -30,7 +34,10 @@ const navByRole: Record<UserType, NavItem[]> = {
     { label: 'Overview', href: '/admin', icon: LayoutDashboard },
     { label: 'Accounts', href: '/admin/accounts', icon: Building2 },
     { label: 'Orders', href: '/admin/orders', icon: FileStack },
+    { label: 'Logs', href: '/admin/logs', icon: ScrollText },
+    { label: 'Templates', href: '/admin/templates', icon: FileText },
     { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+    { label: 'Features', href: '/admin/features', icon: ToggleRight },
     { label: 'Settings', href: '/admin/settings', icon: Settings },
   ],
   team: [
@@ -38,6 +45,7 @@ const navByRole: Record<UserType, NavItem[]> = {
     { label: 'Orders', href: '/dashboard/orders', icon: FileStack },
     { label: 'Team', href: '/dashboard/team', icon: Users },
     { label: 'Credits', href: '/dashboard/credits', icon: CreditCard },
+    { label: 'Certificate', href: '/dashboard/certificate', icon: Award },
     { label: 'Settings', href: '/dashboard/settings', icon: Settings },
   ],
   member: [

@@ -160,10 +160,9 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="bg-purple-100 rounded-2xl px-6">
             <div className="flex justify-between items-center h-16">
-              {/* Logo + Name */}
-              <Link href="/" className="flex items-center gap-2">
+              {/* Logo */}
+              <Link href="/" className="flex items-center">
                 <Image src="https://res.cloudinary.com/drsvq4tm6/image/upload/v1768539883/Disen%CC%83o_sin_ti%CC%81tulo_2_tbvifi.png" alt="EZDocu" width={36} height={36} className="h-9 w-9" />
-                <span className="text-xl font-semibold text-gray-900">EZDocu</span>
               </Link>
 
               {/* Mobile menu button */}
@@ -638,27 +637,45 @@ export default function Home() {
             </div>
           </AnimationContainer>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 w-full py-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 w-full py-4 gap-6">
             {PROCESS.map((process, id) => (
-              <AnimationContainer delay={0.15 * id} key={id}>
-                <MagicCard className="h-full">
-                  <div className="flex flex-col items-start justify-center w-full">
-                    <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                      <process.icon className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <div className="flex flex-col relative items-start mt-4">
-                      <span className="absolute -top-2 right-0 bg-purple-600 text-white font-semibold text-lg rounded-full w-8 h-8 flex items-center justify-center">
-                        {id + 1}
-                      </span>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {process.title}
-                      </h3>
-                      <p className="mt-2 text-sm text-gray-600">
-                        {process.description}
-                      </p>
+              <AnimationContainer delay={0.1 + id * 0.1} key={id}>
+                <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-purple-200 transition-all">
+                  {/* Video placeholder */}
+                  <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-50 relative">
+                    <video
+                      className="w-full h-full object-cover"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      poster={`/videos/step-${id + 1}-poster.jpg`}
+                    >
+                      <source src={`/videos/step-${id + 1}.mp4`} type="video/mp4" />
+                    </video>
+                    {/* Fallback if no video */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-50 to-violet-50">
+                      <process.icon className="w-16 h-16 text-purple-300" />
                     </div>
                   </div>
-                </MagicCard>
+                  {/* Content */}
+                  <div className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+                          <process.icon className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">{process.title}</h3>
+                          <p className="text-sm text-gray-600 mt-1">{process.description}</p>
+                        </div>
+                      </div>
+                      <span className="bg-purple-600 text-white font-semibold text-sm rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
+                        {id + 1}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </AnimationContainer>
             ))}
           </div>
