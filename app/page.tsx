@@ -16,6 +16,7 @@ const TextHoverEffect = dynamic(() => import('@/components/ui/text-hover-effect'
 const BentoGrid = dynamic(() => import('@/components/ui/bento-grid').then(m => ({ default: m.BentoGrid })), { ssr: false });
 const BentoCard = dynamic(() => import('@/components/ui/bento-grid').then(m => ({ default: m.BentoCard })), { ssr: false });
 const WorldMap = dynamic(() => import('@/components/ui/world-map'), { ssr: false });
+const Timeline = dynamic(() => import('@/components/ui/timeline').then(m => ({ default: m.Timeline })), { ssr: false });
 
 import {
   FileText,
@@ -622,11 +623,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Process Section */}
-      <section id="how-it-works" className="py-12 px-4 bg-gradient-to-b from-white via-purple-50/50 to-white">
+      {/* Process Section - Timeline Style */}
+      <section id="how-it-works" className="py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <AnimationContainer delay={0.1}>
-            <div className="flex flex-col items-center justify-center w-full py-4 max-w-xl mx-auto">
+            <div className="flex flex-col items-center justify-center w-full py-4 max-w-xl mx-auto mb-10">
               <MagicBadge title="The Process" />
               <h2 className="text-center text-3xl md:text-5xl !leading-[1.1] font-bold text-gray-900 mt-6">
                 Four simple steps to certified translations
@@ -637,47 +638,113 @@ export default function Home() {
             </div>
           </AnimationContainer>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 w-full py-4 gap-6">
-            {PROCESS.map((process, id) => (
-              <AnimationContainer delay={0.1 + id * 0.1} key={id}>
-                <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg hover:border-purple-200 transition-all">
-                  {/* Video placeholder */}
-                  <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-50 relative">
-                    <video
-                      className="w-full h-full object-cover"
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      poster={`/videos/step-${id + 1}-poster.jpg`}
-                    >
-                      <source src={`/videos/step-${id + 1}.mp4`} type="video/mp4" />
-                    </video>
-                    {/* Fallback if no video */}
-                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-50 to-violet-50">
-                      <process.icon className="w-16 h-16 text-purple-300" />
-                    </div>
-                  </div>
-                  {/* Content */}
-                  <div className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
-                          <process.icon className="w-5 h-5 text-purple-600" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900">{process.title}</h3>
-                          <p className="text-sm text-gray-600 mt-1">{process.description}</p>
-                        </div>
+          <div className="relative w-full overflow-clip">
+            <Timeline data={[
+              {
+                title: "Upload Document",
+                content: (
+                  <div>
+                    <p className="text-gray-600 text-sm md:text-base mb-6">
+                      Drop your PDF, image, or Word document. We support 50+ file formats including scanned documents, photos, and digital files.
+                    </p>
+                    {/* Video placeholder */}
+                    <div className="aspect-video bg-gradient-to-br from-purple-600 to-violet-600 rounded-2xl overflow-hidden relative shadow-2xl">
+                      <video
+                        className="w-full h-full object-cover absolute inset-0 z-10"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      >
+                        <source src="/videos/step-1.mp4" type="video/mp4" />
+                      </video>
+                      {/* Fallback */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Upload className="w-20 h-20 text-white/40" />
                       </div>
-                      <span className="bg-purple-600 text-white font-semibold text-sm rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0">
-                        {id + 1}
-                      </span>
                     </div>
                   </div>
-                </div>
-              </AnimationContainer>
-            ))}
+                ),
+              },
+              {
+                title: "Review OCR",
+                content: (
+                  <div>
+                    <p className="text-gray-600 text-sm md:text-base mb-6">
+                      Verify the extracted text is accurate with our AI-powered OCR engine. Make corrections if needed before translation.
+                    </p>
+                    {/* Video placeholder */}
+                    <div className="aspect-video bg-gradient-to-br from-purple-600 to-violet-600 rounded-2xl overflow-hidden relative shadow-2xl">
+                      <video
+                        className="w-full h-full object-cover absolute inset-0 z-10"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      >
+                        <source src="/videos/step-2.mp4" type="video/mp4" />
+                      </video>
+                      {/* Fallback */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Eye className="w-20 h-20 text-white/40" />
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                title: "Translate & Edit",
+                content: (
+                  <div>
+                    <p className="text-gray-600 text-sm md:text-base mb-6">
+                      Edit and approve AI-generated translation with full control. Side-by-side editor lets you perfect every detail.
+                    </p>
+                    {/* Video placeholder */}
+                    <div className="aspect-video bg-gradient-to-br from-purple-600 to-violet-600 rounded-2xl overflow-hidden relative shadow-2xl">
+                      <video
+                        className="w-full h-full object-cover absolute inset-0 z-10"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      >
+                        <source src="/videos/step-3.mp4" type="video/mp4" />
+                      </video>
+                      {/* Fallback */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Edit3 className="w-20 h-20 text-white/40" />
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                title: "Export & Certify",
+                content: (
+                  <div>
+                    <p className="text-gray-600 text-sm md:text-base mb-6">
+                      Download your translation with certificate attached. Ready for USCIS, courts, and official submissions.
+                    </p>
+                    {/* Video placeholder */}
+                    <div className="aspect-video bg-gradient-to-br from-purple-600 to-violet-600 rounded-2xl overflow-hidden relative shadow-2xl">
+                      <video
+                        className="w-full h-full object-cover absolute inset-0 z-10"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                      >
+                        <source src="/videos/step-4.mp4" type="video/mp4" />
+                      </video>
+                      {/* Fallback */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Download className="w-20 h-20 text-white/40" />
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+            ]} />
           </div>
         </div>
       </section>
