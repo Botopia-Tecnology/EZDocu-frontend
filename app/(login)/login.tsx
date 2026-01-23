@@ -125,7 +125,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
 
       if (data.status === 200) {
         setForgotStep('code');
-        setResendCooldown(60);
+        setResendCooldown(30);
       } else {
         setForgotError(data.message || 'Failed to send reset code');
       }
@@ -152,7 +152,7 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
 
       const data = await response.json();
       if (data.status === 200) {
-        setResendCooldown(60);
+        setResendCooldown(30);
         setForgotCode(['', '', '', '', '', '']);
       }
     } catch (err) {
