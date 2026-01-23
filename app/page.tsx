@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
@@ -9,6 +9,368 @@ import { AnimationContainer } from '@/components/ui/animation-container';
 import { MagicBadge } from '@/components/ui/magic-badge';
 import { MagicCard } from '@/components/ui/magic-card';
 import { Input } from '@/components/ui/input';
+
+type Lang = 'en' | 'es' | 'pt';
+
+const translations = {
+  en: {
+    features: 'Features',
+    howItWorks: 'How it works',
+    pricing: 'Pricing',
+    faq: 'FAQ',
+    login: 'Log in',
+    getStarted: 'Get started',
+    heroTitle: 'Translate documents with',
+    heroTitleHighlight: 'legal precision',
+    heroDesc: 'Professional OCR and translation platform for certified translators.',
+    heroDesc2: 'Full control, audit trails, and legal compliance built-in.',
+    startTrial: 'Start free trial',
+    seeHow: 'See how it works',
+    badge: 'AI-Powered Document Translation',
+    trusted: 'Trusted by certified translators worldwide',
+    uscis: 'USCIS Compliant',
+    ata: 'ATA Certified Support',
+    soc2: 'SOC 2 Security',
+    hipaa: 'HIPAA Ready',
+    featuresTitle: 'Everything you need for professional translation',
+    featuresDesc: 'Built specifically for certified translators and legal professionals',
+    processTitle: 'Four simple steps to certified translations',
+    processDesc: 'Follow these simple steps to translate, certify, and deliver your documents.',
+    step1: 'Upload Document',
+    step1Desc: 'Drop your PDF, image, or Word document. We support 50+ file formats including scanned documents, photos, and digital files.',
+    step2: 'Review OCR',
+    step2Desc: 'Verify the extracted text is accurate with our AI-powered OCR engine. Make corrections if needed before translation.',
+    step3: 'Translate & Edit',
+    step3Desc: 'Edit and approve AI-generated translation with full control. Side-by-side editor lets you perfect every detail.',
+    step4: 'Export & Certify',
+    step4Desc: 'Download your translation with certificate attached. Ready for USCIS, courts, and official submissions.',
+    pricingTitle: 'Choose a plan that works for you',
+    pricingDesc: 'Get started with EZDocu today and enjoy more features with our pro plans.',
+    monthly: 'Monthly',
+    yearly: 'Yearly',
+    free: 'Free',
+    forIndividuals: 'For most individuals',
+    pro: 'Pro',
+    forSmall: 'For small businesses',
+    business: 'Business',
+    forLarge: 'For large organizations',
+    mostPopular: 'Most Popular',
+    startFree: 'Start for free',
+    contactTeam: 'Contact team',
+    noCard: 'No credit card required for free plan',
+    trustedWorldwide: 'Trusted',
+    worldwide: 'Worldwide',
+    ctaDesc: 'Join thousands of certified translators who save hours every week with EZDocu.',
+    startYourTrial: 'Start your free trial',
+    stillQuestions: 'Still have questions?',
+    contactSupport: 'Contact Support',
+    faq1Q: 'What types of documents can EZDocu translate?',
+    faq1A: 'EZDocu supports all common document types including birth certificates, marriage certificates, diplomas, transcripts, passports, driver\'s licenses, legal contracts, and more. We handle both scanned images and digital PDFs with our advanced OCR technology.',
+    faq2Q: 'Are the translations accepted by USCIS and other government agencies?',
+    faq2A: 'Yes! All translations completed through EZDocu include a Certificate of Translation Accuracy that meets USCIS requirements. Our certified translations are accepted by immigration offices, courts, universities, and government agencies worldwide.',
+    faq3Q: 'How does the AI translation work?',
+    faq3A: 'Our AI uses advanced language models trained specifically on legal and official document terminology. It provides accurate initial translations that certified translators can then review and finalize. This hybrid approach ensures both speed and accuracy.',
+    faq4Q: 'How long does it take to get a certified translation?',
+    faq4A: 'Most single-page documents are completed within 24 hours. Complex multi-page documents may take 2-3 business days. We also offer rush processing for urgent requests at an additional fee.',
+    faq5Q: 'Can I edit the translation before finalizing?',
+    faq5A: 'Absolutely! EZDocu provides a side-by-side editor where you can review the AI-generated translation, make adjustments, and ensure everything is perfect before generating the certified document.',
+    faq6Q: 'What\'s included in the free plan?',
+    faq6A: 'The free plan includes 5 pages per month, basic OCR extraction, AI translation assistance, community support, and basic certification. It\'s perfect for individuals with occasional translation needs.',
+    faq7Q: 'Is my data secure?',
+    faq7A: 'Yes, security is our top priority. All documents are encrypted in transit and at rest. We\'re SOC 2 certified and HIPAA compliant. Your documents are automatically deleted after 30 days, or you can delete them immediately after download.',
+    faq8Q: 'Do you offer team or enterprise plans?',
+    faq8A: 'Yes! Our Business plan includes unlimited pages, team workspaces for up to 5 users, dedicated account management, API access, and custom integrations. Contact our sales team for enterprise pricing with additional features.',
+    footerDesc: 'Professional document translation platform for certified translators.',
+    product: 'Product',
+    resources: 'Resources',
+    company: 'Company',
+    blog: 'Blog',
+    support: 'Support',
+    apiDocs: 'API Docs',
+    aboutUs: 'About Us',
+    privacyPolicy: 'Privacy Policy',
+    termsConditions: 'Terms & Conditions',
+    year: 'year',
+    month: 'month',
+    pagesPerMonth: '5 pages per month',
+    basicOcr: 'Basic OCR extraction',
+    aiTranslation: 'AI translation',
+    communitySupport: 'Community support',
+    basicCertificates: 'Basic certificates',
+    proPages: '100 pages per month',
+    advancedOcr: 'Advanced OCR extraction',
+    aiTranslationEdit: 'AI translation + editing',
+    prioritySupport: 'Priority support',
+    customCertificates: 'Custom certificates',
+    auditTrail: 'Audit trail',
+    unlimitedPages: 'Unlimited pages',
+    premiumOcr: 'Premium OCR extraction',
+    teamWorkspace: 'Team workspace (5 users)',
+    dedicatedManager: 'Dedicated manager',
+    apiAccess: 'API access',
+    smartOcr: 'Smart OCR',
+    smartOcrDesc: 'Extract text from any document with 99.9% accuracy.',
+    aiTranslationTitle: 'AI Translation',
+    aiTranslationDesc: 'Context-aware translations that understand legal terminology.',
+    teamWorkspaceTitle: 'Team Workspace',
+    teamWorkspaceDesc: 'Invite team members and track progress in real-time.',
+    legalCertificates: 'Legal Certificates',
+    legalCertificatesDesc: 'Auto-generate certified translation certificates.',
+    learnMore: 'Learn more',
+    uploadDocument: 'Upload Document',
+    dropFiles: 'Drop your files here',
+    searchDocuments: 'Search documents...',
+    birthCertificate: 'Birth Certificate',
+    marriageLicense: 'Marriage License',
+    diploma: 'Diploma',
+    passport: 'Passport',
+    legalContract: 'Legal Contract',
+    certificateOfTranslation: 'Certificate of Translation',
+    certifiedTranslation: 'Certified Translation',
+  },
+  es: {
+    features: 'Características',
+    howItWorks: 'Cómo funciona',
+    pricing: 'Precios',
+    faq: 'Preguntas frecuentes',
+    login: 'Acceso',
+    getStarted: 'Empezar',
+    heroTitle: 'Traducir documentos con',
+    heroTitleHighlight: 'precisión legal',
+    heroDesc: 'Plataforma profesional de OCR y traducción para traductores certificados.',
+    heroDesc2: 'Control total, registros de auditoría y cumplimiento legal integrados.',
+    startTrial: 'Comience una prueba gratuita',
+    seeHow: 'Vea cómo funciona',
+    badge: 'Traducción de documentos impulsada por IA',
+    trusted: 'Confiado por traductores certificados en todo el mundo',
+    uscis: 'Compatible con USCIS',
+    ata: 'Soporte Certificado ATA',
+    soc2: 'Seguridad SOC 2',
+    hipaa: 'Listo para HIPAA',
+    featuresTitle: 'Todo lo que necesitas para traducción profesional',
+    featuresDesc: 'Diseñado específicamente para traductores certificados y profesionales legales',
+    processTitle: 'Cuatro simples pasos para traducciones certificadas',
+    processDesc: 'Sigue estos simples pasos para traducir, certificar y entregar tus documentos.',
+    step1: 'Subir documento',
+    step1Desc: 'Sube tu PDF, imagen o documento Word. Soportamos más de 50 formatos incluyendo documentos escaneados, fotos y archivos digitales.',
+    step2: 'Revisar OCR',
+    step2Desc: 'Verifica que el texto extraído sea preciso con nuestro motor OCR impulsado por IA. Haz correcciones si es necesario antes de traducir.',
+    step3: 'Traducir y editar',
+    step3Desc: 'Edita y aprueba la traducción generada por IA con control total. El editor lado a lado te permite perfeccionar cada detalle.',
+    step4: 'Exportar y certificar',
+    step4Desc: 'Descarga tu traducción con certificado adjunto. Listo para USCIS, tribunales y presentaciones oficiales.',
+    pricingTitle: 'Elige un plan que funcione para ti',
+    pricingDesc: 'Comienza con EZDocu hoy y disfruta de más funciones con nuestros planes pro.',
+    monthly: 'Mensual',
+    yearly: 'Anual',
+    free: 'Gratis',
+    forIndividuals: 'Para la mayoría de individuos',
+    pro: 'Pro',
+    forSmall: 'Para pequeñas empresas',
+    business: 'Empresarial',
+    forLarge: 'Para grandes organizaciones',
+    mostPopular: 'Más Popular',
+    startFree: 'Comenzar gratis',
+    contactTeam: 'Contactar equipo',
+    noCard: 'No se requiere tarjeta de crédito para el plan gratuito',
+    trustedWorldwide: 'Confianza',
+    worldwide: 'Mundial',
+    ctaDesc: 'Únete a miles de traductores certificados que ahorran horas cada semana con EZDocu.',
+    startYourTrial: 'Comienza tu prueba gratuita',
+    stillQuestions: '¿Aún tienes preguntas?',
+    contactSupport: 'Contactar Soporte',
+    faq1Q: '¿Qué tipos de documentos puede traducir EZDocu?',
+    faq1A: 'EZDocu soporta todos los tipos de documentos comunes incluyendo actas de nacimiento, actas de matrimonio, diplomas, transcripciones, pasaportes, licencias de conducir, contratos legales y más. Manejamos tanto imágenes escaneadas como PDFs digitales con nuestra tecnología OCR avanzada.',
+    faq2Q: '¿Las traducciones son aceptadas por USCIS y otras agencias gubernamentales?',
+    faq2A: '¡Sí! Todas las traducciones completadas a través de EZDocu incluyen un Certificado de Precisión de Traducción que cumple con los requisitos de USCIS. Nuestras traducciones certificadas son aceptadas por oficinas de inmigración, tribunales, universidades y agencias gubernamentales en todo el mundo.',
+    faq3Q: '¿Cómo funciona la traducción con IA?',
+    faq3A: 'Nuestra IA utiliza modelos de lenguaje avanzados entrenados específicamente en terminología legal y de documentos oficiales. Proporciona traducciones iniciales precisas que los traductores certificados pueden revisar y finalizar. Este enfoque híbrido garantiza velocidad y precisión.',
+    faq4Q: '¿Cuánto tiempo toma obtener una traducción certificada?',
+    faq4A: 'La mayoría de los documentos de una página se completan en 24 horas. Los documentos complejos de varias páginas pueden tomar 2-3 días hábiles. También ofrecemos procesamiento urgente para solicitudes urgentes con una tarifa adicional.',
+    faq5Q: '¿Puedo editar la traducción antes de finalizarla?',
+    faq5A: '¡Por supuesto! EZDocu proporciona un editor lado a lado donde puedes revisar la traducción generada por IA, hacer ajustes y asegurar que todo esté perfecto antes de generar el documento certificado.',
+    faq6Q: '¿Qué incluye el plan gratuito?',
+    faq6A: 'El plan gratuito incluye 5 páginas por mes, extracción OCR básica, asistencia de traducción con IA, soporte comunitario y certificación básica. Es perfecto para individuos con necesidades ocasionales de traducción.',
+    faq7Q: '¿Mis datos están seguros?',
+    faq7A: 'Sí, la seguridad es nuestra principal prioridad. Todos los documentos están encriptados en tránsito y en reposo. Tenemos certificación SOC 2 y cumplimos con HIPAA. Tus documentos se eliminan automáticamente después de 30 días, o puedes eliminarlos inmediatamente después de descargarlos.',
+    faq8Q: '¿Ofrecen planes de equipo o empresariales?',
+    faq8A: '¡Sí! Nuestro plan Business incluye páginas ilimitadas, espacios de trabajo en equipo para hasta 5 usuarios, gestión de cuenta dedicada, acceso API e integraciones personalizadas. Contacta a nuestro equipo de ventas para precios empresariales con características adicionales.',
+    footerDesc: 'Plataforma profesional de traducción de documentos para traductores certificados.',
+    product: 'Producto',
+    resources: 'Recursos',
+    company: 'Empresa',
+    blog: 'Blog',
+    support: 'Soporte',
+    apiDocs: 'Documentación API',
+    aboutUs: 'Sobre Nosotros',
+    privacyPolicy: 'Política de Privacidad',
+    termsConditions: 'Términos y Condiciones',
+    year: 'año',
+    month: 'mes',
+    pagesPerMonth: '5 páginas por mes',
+    basicOcr: 'Extracción OCR básica',
+    aiTranslation: 'Traducción con IA',
+    communitySupport: 'Soporte comunitario',
+    basicCertificates: 'Certificados básicos',
+    proPages: '100 páginas por mes',
+    advancedOcr: 'Extracción OCR avanzada',
+    aiTranslationEdit: 'Traducción con IA + edición',
+    prioritySupport: 'Soporte prioritario',
+    customCertificates: 'Certificados personalizados',
+    auditTrail: 'Historial de auditoría',
+    unlimitedPages: 'Páginas ilimitadas',
+    premiumOcr: 'Extracción OCR premium',
+    teamWorkspace: 'Espacio de equipo (5 usuarios)',
+    dedicatedManager: 'Gerente dedicado',
+    apiAccess: 'Acceso API',
+    smartOcr: 'OCR Inteligente',
+    smartOcrDesc: 'Extrae texto de cualquier documento con 99.9% de precisión.',
+    aiTranslationTitle: 'Traducción con IA',
+    aiTranslationDesc: 'Traducciones contextuales que entienden terminología legal.',
+    teamWorkspaceTitle: 'Espacio de Equipo',
+    teamWorkspaceDesc: 'Invita miembros del equipo y sigue el progreso en tiempo real.',
+    legalCertificates: 'Certificados Legales',
+    legalCertificatesDesc: 'Genera automáticamente certificados de traducción certificada.',
+    learnMore: 'Más información',
+    uploadDocument: 'Subir Documento',
+    dropFiles: 'Suelta tus archivos aquí',
+    searchDocuments: 'Buscar documentos...',
+    birthCertificate: 'Acta de Nacimiento',
+    marriageLicense: 'Acta de Matrimonio',
+    diploma: 'Diploma',
+    passport: 'Pasaporte',
+    legalContract: 'Contrato Legal',
+    certificateOfTranslation: 'Certificado de Traducción',
+    certifiedTranslation: 'Traducción Certificada',
+  },
+  pt: {
+    features: 'Recursos',
+    howItWorks: 'Como funciona',
+    pricing: 'Preços',
+    faq: 'Perguntas frequentes',
+    login: 'Entrar',
+    getStarted: 'Começar',
+    heroTitle: 'Traduzir documentos com',
+    heroTitleHighlight: 'precisão legal',
+    heroDesc: 'Plataforma profissional de OCR e tradução para tradutores certificados.',
+    heroDesc2: 'Controle total, trilhas de auditoria e conformidade legal integrados.',
+    startTrial: 'Iniciar teste gratuito',
+    seeHow: 'Veja como funciona',
+    badge: 'Tradução de documentos com IA',
+    trusted: 'Confiado por tradutores certificados em todo o mundo',
+    uscis: 'Compatível com USCIS',
+    ata: 'Suporte Certificado ATA',
+    soc2: 'Segurança SOC 2',
+    hipaa: 'Pronto para HIPAA',
+    featuresTitle: 'Tudo o que você precisa para tradução profissional',
+    featuresDesc: 'Construído especificamente para tradutores certificados e profissionais jurídicos',
+    processTitle: 'Quatro passos simples para traduções certificadas',
+    processDesc: 'Siga estes passos simples para traduzir, certificar e entregar seus documentos.',
+    step1: 'Enviar documento',
+    step1Desc: 'Envie seu PDF, imagem ou documento Word. Suportamos mais de 50 formatos incluindo documentos digitalizados, fotos e arquivos digitais.',
+    step2: 'Revisar OCR',
+    step2Desc: 'Verifique se o texto extraído está preciso com nosso motor OCR com IA. Faça correções se necessário antes de traduzir.',
+    step3: 'Traduzir e editar',
+    step3Desc: 'Edite e aprove a tradução gerada por IA com controle total. O editor lado a lado permite aperfeiçoar cada detalhe.',
+    step4: 'Exportar e certificar',
+    step4Desc: 'Baixe sua tradução com certificado anexado. Pronto para USCIS, tribunais e submissões oficiais.',
+    pricingTitle: 'Escolha um plano que funcione para você',
+    pricingDesc: 'Comece com EZDocu hoje e aproveite mais recursos com nossos planos pro.',
+    monthly: 'Mensal',
+    yearly: 'Anual',
+    free: 'Grátis',
+    forIndividuals: 'Para a maioria dos indivíduos',
+    pro: 'Pro',
+    forSmall: 'Para pequenas empresas',
+    business: 'Empresarial',
+    forLarge: 'Para grandes organizações',
+    mostPopular: 'Mais Popular',
+    startFree: 'Começar grátis',
+    contactTeam: 'Contatar equipe',
+    noCard: 'Não é necessário cartão de crédito para o plano gratuito',
+    trustedWorldwide: 'Confiança',
+    worldwide: 'Mundial',
+    ctaDesc: 'Junte-se a milhares de tradutores certificados que economizam horas toda semana com EZDocu.',
+    startYourTrial: 'Comece seu teste gratuito',
+    stillQuestions: 'Ainda tem perguntas?',
+    contactSupport: 'Contatar Suporte',
+    faq1Q: 'Que tipos de documentos o EZDocu pode traduzir?',
+    faq1A: 'O EZDocu suporta todos os tipos comuns de documentos, incluindo certidões de nascimento, certidões de casamento, diplomas, históricos escolares, passaportes, carteiras de motorista, contratos legais e muito mais. Processamos tanto imagens digitalizadas quanto PDFs digitais com nossa tecnologia OCR avançada.',
+    faq2Q: 'As traduções são aceitas pelo USCIS e outras agências governamentais?',
+    faq2A: 'Sim! Todas as traduções concluídas através do EZDocu incluem um Certificado de Precisão de Tradução que atende aos requisitos do USCIS. Nossas traduções certificadas são aceitas por escritórios de imigração, tribunais, universidades e agências governamentais em todo o mundo.',
+    faq3Q: 'Como funciona a tradução com IA?',
+    faq3A: 'Nossa IA usa modelos de linguagem avançados treinados especificamente em terminologia legal e de documentos oficiais. Ela fornece traduções iniciais precisas que tradutores certificados podem revisar e finalizar. Essa abordagem híbrida garante velocidade e precisão.',
+    faq4Q: 'Quanto tempo leva para obter uma tradução certificada?',
+    faq4A: 'A maioria dos documentos de uma página é concluída em 24 horas. Documentos complexos de várias páginas podem levar 2-3 dias úteis. Também oferecemos processamento urgente para solicitações urgentes com uma taxa adicional.',
+    faq5Q: 'Posso editar a tradução antes de finalizar?',
+    faq5A: 'Com certeza! O EZDocu fornece um editor lado a lado onde você pode revisar a tradução gerada por IA, fazer ajustes e garantir que tudo esteja perfeito antes de gerar o documento certificado.',
+    faq6Q: 'O que está incluído no plano gratuito?',
+    faq6A: 'O plano gratuito inclui 5 páginas por mês, extração OCR básica, assistência de tradução com IA, suporte da comunidade e certificação básica. É perfeito para indivíduos com necessidades ocasionais de tradução.',
+    faq7Q: 'Meus dados estão seguros?',
+    faq7A: 'Sim, a segurança é nossa principal prioridade. Todos os documentos são criptografados em trânsito e em repouso. Temos certificação SOC 2 e conformidade com HIPAA. Seus documentos são automaticamente excluídos após 30 dias, ou você pode excluí-los imediatamente após o download.',
+    faq8Q: 'Vocês oferecem planos para equipes ou empresas?',
+    faq8A: 'Sim! Nosso plano Business inclui páginas ilimitadas, espaços de trabalho em equipe para até 5 usuários, gerenciamento de conta dedicado, acesso à API e integrações personalizadas. Entre em contato com nossa equipe de vendas para preços empresariais com recursos adicionais.',
+    footerDesc: 'Plataforma profissional de tradução de documentos para tradutores certificados.',
+    product: 'Produto',
+    resources: 'Recursos',
+    company: 'Empresa',
+    blog: 'Blog',
+    support: 'Suporte',
+    apiDocs: 'Documentação API',
+    aboutUs: 'Sobre Nós',
+    privacyPolicy: 'Política de Privacidade',
+    termsConditions: 'Termos e Condições',
+    year: 'ano',
+    month: 'mês',
+    pagesPerMonth: '5 páginas por mês',
+    basicOcr: 'Extração OCR básica',
+    aiTranslation: 'Tradução com IA',
+    communitySupport: 'Suporte da comunidade',
+    basicCertificates: 'Certificados básicos',
+    proPages: '100 páginas por mês',
+    advancedOcr: 'Extração OCR avançada',
+    aiTranslationEdit: 'Tradução com IA + edição',
+    prioritySupport: 'Suporte prioritário',
+    customCertificates: 'Certificados personalizados',
+    auditTrail: 'Trilha de auditoria',
+    unlimitedPages: 'Páginas ilimitadas',
+    premiumOcr: 'Extração OCR premium',
+    teamWorkspace: 'Espaço de equipe (5 usuários)',
+    dedicatedManager: 'Gerente dedicado',
+    apiAccess: 'Acesso à API',
+    smartOcr: 'OCR Inteligente',
+    smartOcrDesc: 'Extraia texto de qualquer documento com 99.9% de precisão.',
+    aiTranslationTitle: 'Tradução com IA',
+    aiTranslationDesc: 'Traduções contextuais que entendem terminologia legal.',
+    teamWorkspaceTitle: 'Espaço de Equipe',
+    teamWorkspaceDesc: 'Convide membros da equipe e acompanhe o progresso em tempo real.',
+    legalCertificates: 'Certificados Legais',
+    legalCertificatesDesc: 'Gere automaticamente certificados de tradução certificada.',
+    learnMore: 'Saiba mais',
+    uploadDocument: 'Enviar Documento',
+    dropFiles: 'Solte seus arquivos aqui',
+    searchDocuments: 'Pesquisar documentos...',
+    birthCertificate: 'Certidão de Nascimento',
+    marriageLicense: 'Certidão de Casamento',
+    diploma: 'Diploma',
+    passport: 'Passaporte',
+    legalContract: 'Contrato Legal',
+    certificateOfTranslation: 'Certificado de Tradução',
+    certifiedTranslation: 'Tradução Certificada',
+  },
+};
+
+const langNames: Record<Lang, string> = {
+  en: 'EN',
+  es: 'ES',
+  pt: 'PT',
+};
+
+const langFlags: Record<Lang, string> = {
+  en: '🇺🇸',
+  es: '🇪🇸',
+  pt: '🇧🇷',
+};
 
 // Lazy load heavy components that use framer-motion
 const BorderBeam = dynamic(() => import('@/components/ui/border-beam').then(m => ({ default: m.BorderBeam })), { ssr: false });
@@ -137,6 +499,29 @@ function FaqItem({ question, answer, index }: { question: string; answer: string
 export default function Home() {
   const [isYearly, setIsYearly] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [lang, setLang] = useState<Lang>('en');
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+
+  useEffect(() => {
+    // Detect browser language
+    const browserLang = navigator.language?.split('-')[0] || 'en';
+    if (browserLang === 'es' || browserLang === 'pt') {
+      setLang(browserLang as Lang);
+    }
+    // Check localStorage
+    const saved = localStorage.getItem('lang') as Lang;
+    if (saved && ['en', 'es', 'pt'].includes(saved)) {
+      setLang(saved);
+    }
+  }, []);
+
+  const handleLangChange = (newLang: Lang) => {
+    setLang(newLang);
+    localStorage.setItem('lang', newLang);
+    setLangMenuOpen(false);
+  };
+
+  const t = translations[lang];
 
   const prices = {
     pro: { monthly: 29, yearly: 255 },
@@ -159,7 +544,7 @@ export default function Home() {
       {/* Navigation - Floating Header like Parley */}
       <nav className="fixed w-full z-50 pt-6 px-6 md:px-10 lg:px-16">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-purple-100 rounded-2xl px-6">
+          <div className="bg-purple-100 rounded-2xl px-6 overflow-visible">
             <div className="flex justify-between items-center h-16">
               {/* Logo */}
               <Link href="/" className="flex items-center">
@@ -186,7 +571,7 @@ export default function Home() {
                   }}
                   className="text-sm text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
                 >
-                  Features
+                  {t.features}
                 </button>
                 <button
                   onClick={() => {
@@ -198,7 +583,7 @@ export default function Home() {
                   }}
                   className="text-sm text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
                 >
-                  How it works
+                  {t.howItWorks}
                 </button>
                 <button
                   onClick={() => {
@@ -210,7 +595,7 @@ export default function Home() {
                   }}
                   className="text-sm text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
                 >
-                  Pricing
+                  {t.pricing}
                 </button>
                 <button
                   onClick={() => {
@@ -222,20 +607,46 @@ export default function Home() {
                   }}
                   className="text-sm text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
                 >
-                  FAQ
+                  {t.faq}
                 </button>
 
                 <Link href="/sign-in">
                   <Button variant="outline" size="sm" className="text-gray-700 border-gray-300 bg-white hover:bg-gray-50 rounded-lg ml-2">
-                    Log in
+                    {t.login}
                   </Button>
                 </Link>
                 <Link href="/sign-up">
                   <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg px-4">
-                    Get started
+                    {t.getStarted}
                     <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
                 </Link>
+
+                {/* Language Selector */}
+                <div className="relative">
+                  <button
+                    onClick={() => setLangMenuOpen(!langMenuOpen)}
+                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-purple-200 transition-colors cursor-pointer text-sm text-gray-700"
+                  >
+                    <span>{langFlags[lang]}</span>
+                    <span>{langNames[lang]}</span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${langMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {langMenuOpen && (
+                    <div className="absolute right-0 top-full mt-3 bg-white rounded-xl shadow-lg border border-gray-200 py-1 min-w-[100px] z-[200]">
+                      {(['en', 'es', 'pt'] as Lang[]).map((l) => (
+                        <button
+                          key={l}
+                          onClick={() => handleLangChange(l)}
+                          className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-purple-50 transition-colors cursor-pointer ${lang === l ? 'bg-purple-50 text-purple-600' : 'text-gray-700'}`}
+                        >
+                          <span>{langFlags[l]}</span>
+                          <span>{langNames[l]}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -280,7 +691,7 @@ export default function Home() {
               className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3 cursor-pointer"
             >
               <Sparkles className="h-5 w-5" />
-              Features
+              {t.features}
             </button>
             <button
               onClick={() => {
@@ -294,7 +705,7 @@ export default function Home() {
               className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3 cursor-pointer"
             >
               <Eye className="h-5 w-5" />
-              How it works
+              {t.howItWorks}
             </button>
             <button
               onClick={() => {
@@ -308,7 +719,7 @@ export default function Home() {
               className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3 cursor-pointer"
             >
               <CreditCard className="h-5 w-5" />
-              Pricing
+              {t.pricing}
             </button>
             <button
               onClick={() => {
@@ -322,20 +733,38 @@ export default function Home() {
               className="w-full text-left text-white/90 hover:text-white py-3 px-4 rounded-xl hover:bg-white/10 transition-colors flex items-center gap-3 cursor-pointer"
             >
               <HelpCircle className="h-5 w-5" />
-              FAQ
+              {t.faq}
             </button>
           </nav>
 
+          {/* Language Selector for Mobile */}
+          <div className="py-4 border-t border-white/20">
+            <div className="flex items-center gap-2">
+              {(['en', 'es', 'pt'] as Lang[]).map((l) => (
+                <button
+                  key={l}
+                  onClick={() => handleLangChange(l)}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                    lang === l ? 'bg-white/20 text-white' : 'text-white/70 hover:bg-white/10'
+                  }`}
+                >
+                  <span>{langFlags[l]}</span>
+                  <span>{langNames[l]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Bottom Actions */}
-          <div className="space-y-3 pt-6 border-t border-white/20">
+          <div className="space-y-3 pt-4 border-t border-white/20">
             <Link href="/sign-in" onClick={() => setMobileMenuOpen(false)} className="block">
               <Button variant="outline" className="w-full bg-transparent border-white/30 text-white hover:bg-white/10 rounded-xl h-11">
-                Log in
+                {t.login}
               </Button>
             </Link>
             <Link href="/sign-up" onClick={() => setMobileMenuOpen(false)} className="block">
               <Button className="w-full bg-white hover:bg-gray-100 text-purple-900 rounded-xl h-11 font-semibold">
-                Get started
+                {t.getStarted}
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
@@ -356,36 +785,36 @@ export default function Home() {
                   <span className="h-full w-full blur-md absolute bottom-0 inset-x-0 bg-gradient-to-tr from-purple-500/10"></span>
                   <span className="z-10 py-0.5 text-sm text-gray-700 flex items-center justify-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-                    AI-Powered Document Translation
+                    {t.badge}
                     <ArrowRight className="ml-1 w-3 h-3 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5" />
                   </span>
                 </button>
 
                 <h1 className="text-gray-900 text-center py-6 text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-balance !leading-[1.1] w-full">
-                  Translate documents with{' '}
+                  {t.heroTitle}{' '}
                   <span className="text-transparent bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text">
-                    legal precision
+                    {t.heroTitleHighlight}
                   </span>
                 </h1>
 
                 <p className="mb-10 text-lg tracking-tight text-gray-600 md:text-xl text-balance max-w-2xl">
-                  Professional OCR and translation platform for certified translators.
+                  {t.heroDesc}
                   <br className="hidden md:block" />
                   <span className="hidden md:block">
-                    Full control, audit trails, and legal compliance built-in.
+                    {t.heroDesc2}
                   </span>
                 </p>
 
-                <div className="flex items-center justify-center whitespace-nowrap gap-4 z-50">
+                <div className="flex items-center justify-center whitespace-nowrap gap-4">
                   <Link href="/sign-up">
                     <Button size="lg" className="bg-gray-900 hover:bg-gray-800 text-white rounded-full px-8 h-12">
-                      Start free trial
+                      {t.startTrial}
                       <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </Link>
                   <Link href="#how-it-works">
                     <Button size="lg" variant="outline" className="rounded-full px-8 h-12 border-gray-200 bg-white">
-                      See how it works
+                      {t.seeHow}
                     </Button>
                   </Link>
                 </div>
@@ -447,24 +876,24 @@ export default function Home() {
         <AnimationContainer delay={0.3}>
           <div className="max-w-4xl mx-auto">
             <p className="text-center text-sm font-medium text-gray-400 uppercase tracking-wider mb-6">
-              Trusted by certified translators worldwide
+              {t.trusted}
             </p>
             <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-500" />
-                <span>USCIS Compliant</span>
+                <span>{t.uscis}</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-500" />
-                <span>ATA Certified Support</span>
+                <span>{t.ata}</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-500" />
-                <span>SOC 2 Security</span>
+                <span>{t.soc2}</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-500" />
-                <span>HIPAA Ready</span>
+                <span>{t.hipaa}</span>
               </div>
             </div>
           </div>
@@ -476,12 +905,12 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <AnimationContainer delay={0.1}>
             <div className="flex flex-col w-full items-center justify-center py-2">
-              <MagicBadge title="Features" />
+              <MagicBadge title={t.features} />
               <h2 className="text-center text-2xl md:text-4xl !leading-[1.1] font-bold text-gray-900 mt-4">
-                Everything you need for professional translation
+                {t.featuresTitle}
               </h2>
               <p className="mt-3 text-center text-base text-gray-600 max-w-lg">
-                Built specifically for certified translators and legal professionals
+                {t.featuresDesc}
               </p>
             </div>
           </AnimationContainer>
@@ -490,63 +919,63 @@ export default function Home() {
             <BentoGrid className="py-2">
               {/* Smart OCR Card */}
               <BentoCard
-                name="Smart OCR"
+                name={t.smartOcr}
                 className="col-span-3 lg:col-span-1"
                 background={
                   <div className="absolute top-10 left-10 origin-top rounded-md transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_0%,#000_100%)] group-hover:scale-105 border border-gray-200 bg-white p-4 rounded-lg shadow-sm">
-                    <div className="text-sm font-medium text-gray-900 mb-2">Upload Document</div>
+                    <div className="text-sm font-medium text-gray-900 mb-2">{t.uploadDocument}</div>
                     <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center">
                       <Upload className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-                      <span className="text-xs text-gray-400">Drop your files here</span>
+                      <span className="text-xs text-gray-400">{t.dropFiles}</span>
                     </div>
                   </div>
                 }
                 Icon={FileText}
-                description="Extract text from any document with 99.9% accuracy."
+                description={t.smartOcrDesc}
                 href="#"
-                cta="Learn more"
+                cta={t.learnMore}
               />
 
               {/* AI Translation Card */}
               <BentoCard
-                name="AI Translation"
+                name={t.aiTranslationTitle}
                 className="col-span-3 lg:col-span-2"
                 background={
                   <div className="absolute right-10 top-10 w-[70%] border border-gray-200 transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_40%,#000_100%)] group-hover:-translate-x-10 p-4 rounded-lg bg-white shadow-sm">
-                    <Input placeholder="Search documents..." className="mb-3" />
+                    <Input placeholder={t.searchDocuments} className="mb-3" />
                     <div className="cursor-pointer text-sm">
                       <div className="px-4 py-2 hover:bg-gray-50 rounded flex justify-between">
-                        <span className="text-gray-600">Birth Certificate</span>
+                        <span className="text-gray-600">{t.birthCertificate}</span>
                         <span className="text-purple-600">ES → EN</span>
                       </div>
                       <div className="px-4 py-2 hover:bg-gray-50 rounded flex justify-between">
-                        <span className="text-gray-600">Marriage License</span>
+                        <span className="text-gray-600">{t.marriageLicense}</span>
                         <span className="text-purple-600">FR → EN</span>
                       </div>
                       <div className="px-4 py-2 hover:bg-gray-50 rounded flex justify-between">
-                        <span className="text-gray-600">Diploma</span>
+                        <span className="text-gray-600">{t.diploma}</span>
                         <span className="text-purple-600">DE → EN</span>
                       </div>
                       <div className="px-4 py-2 hover:bg-gray-50 rounded flex justify-between">
-                        <span className="text-gray-600">Passport</span>
+                        <span className="text-gray-600">{t.passport}</span>
                         <span className="text-purple-600">PT → EN</span>
                       </div>
                       <div className="px-4 py-2 hover:bg-gray-50 rounded flex justify-between">
-                        <span className="text-gray-600">Legal Contract</span>
+                        <span className="text-gray-600">{t.legalContract}</span>
                         <span className="text-purple-600">IT → EN</span>
                       </div>
                     </div>
                   </div>
                 }
                 Icon={Languages}
-                description="Context-aware translations that understand legal terminology."
+                description={t.aiTranslationDesc}
                 href="#"
-                cta="Learn more"
+                cta={t.learnMore}
               />
 
               {/* Team Workspace Card */}
               <BentoCard
-                name="Team Workspace"
+                name={t.teamWorkspaceTitle}
                 className="col-span-3 lg:col-span-2"
                 background={
                   <div className="absolute right-2 pl-28 md:pl-0 top-4 h-[300px] w-[600px] transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_10%,#000_100%)] group-hover:scale-105">
@@ -585,21 +1014,21 @@ export default function Home() {
                   </div>
                 }
                 Icon={Users}
-                description="Invite team members and track progress in real-time."
+                description={t.teamWorkspaceDesc}
                 href="#"
-                cta="Learn more"
+                cta={t.learnMore}
               />
 
               {/* Legal Certificates Card */}
               <BentoCard
-                name="Legal Certificates"
+                name={t.legalCertificates}
                 className="col-span-3 lg:col-span-1"
                 background={
                   <div className="absolute right-0 top-10 origin-top rounded-md border border-gray-200 transition-all duration-300 ease-out [mask-image:linear-gradient(to_top,transparent_40%,#000_100%)] group-hover:scale-105 bg-white p-4 shadow-sm">
                     <div className="w-44 bg-gray-50 rounded-lg p-4 border border-gray-100">
                       <div className="flex items-center gap-2 mb-3">
                         <Award className="w-5 h-5 text-purple-600" />
-                        <span className="text-xs font-semibold text-gray-700">Certificate of Translation</span>
+                        <span className="text-xs font-semibold text-gray-700">{t.certificateOfTranslation}</span>
                       </div>
                       <div className="space-y-2">
                         <div className="h-2 bg-gray-200 rounded w-full"></div>
@@ -607,16 +1036,16 @@ export default function Home() {
                         <div className="h-2 bg-gray-200 rounded w-5/6"></div>
                       </div>
                       <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
-                        <span className="text-[10px] text-gray-400">Certified Translation</span>
+                        <span className="text-[10px] text-gray-400">{t.certifiedTranslation}</span>
                         <CheckCircle className="w-4 h-4 text-purple-600" />
                       </div>
                     </div>
                   </div>
                 }
                 Icon={Shield}
-                description="Auto-generate certified translation certificates."
+                description={t.legalCertificatesDesc}
                 href="#"
-                cta="Learn more"
+                cta={t.learnMore}
               />
             </BentoGrid>
           </AnimationContainer>
@@ -628,12 +1057,12 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <AnimationContainer delay={0.1}>
             <div className="flex flex-col items-center justify-center w-full py-4 max-w-xl mx-auto mb-10">
-              <MagicBadge title="The Process" />
+              <MagicBadge title={t.howItWorks} />
               <h2 className="text-center text-3xl md:text-5xl !leading-[1.1] font-bold text-gray-900 mt-6">
-                Four simple steps to certified translations
+                {t.processTitle}
               </h2>
               <p className="mt-4 text-center text-lg text-gray-600 max-w-lg">
-                Follow these simple steps to translate, certify, and deliver your documents.
+                {t.processDesc}
               </p>
             </div>
           </AnimationContainer>
@@ -641,11 +1070,11 @@ export default function Home() {
           <div className="relative w-full overflow-clip">
             <Timeline data={[
               {
-                title: "Upload Document",
+                title: t.step1,
                 content: (
                   <div>
                     <p className="text-gray-600 text-sm md:text-base mb-6">
-                      Drop your PDF, image, or Word document. We support 50+ file formats including scanned documents, photos, and digital files.
+                      {t.step1Desc}
                     </p>
                     {/* Video placeholder */}
                     <div className="aspect-video bg-gradient-to-br from-purple-600 to-violet-600 rounded-2xl overflow-hidden relative shadow-2xl">
@@ -667,11 +1096,11 @@ export default function Home() {
                 ),
               },
               {
-                title: "Review OCR",
+                title: t.step2,
                 content: (
                   <div>
                     <p className="text-gray-600 text-sm md:text-base mb-6">
-                      Verify the extracted text is accurate with our AI-powered OCR engine. Make corrections if needed before translation.
+                      {t.step2Desc}
                     </p>
                     {/* Video placeholder */}
                     <div className="aspect-video bg-gradient-to-br from-purple-600 to-violet-600 rounded-2xl overflow-hidden relative shadow-2xl">
@@ -693,11 +1122,11 @@ export default function Home() {
                 ),
               },
               {
-                title: "Translate & Edit",
+                title: t.step3,
                 content: (
                   <div>
                     <p className="text-gray-600 text-sm md:text-base mb-6">
-                      Edit and approve AI-generated translation with full control. Side-by-side editor lets you perfect every detail.
+                      {t.step3Desc}
                     </p>
                     {/* Video placeholder */}
                     <div className="aspect-video bg-gradient-to-br from-purple-600 to-violet-600 rounded-2xl overflow-hidden relative shadow-2xl">
@@ -719,11 +1148,11 @@ export default function Home() {
                 ),
               },
               {
-                title: "Export & Certify",
+                title: t.step4,
                 content: (
                   <div>
                     <p className="text-gray-600 text-sm md:text-base mb-6">
-                      Download your translation with certificate attached. Ready for USCIS, courts, and official submissions.
+                      {t.step4Desc}
                     </p>
                     {/* Video placeholder */}
                     <div className="aspect-video bg-gradient-to-br from-purple-600 to-violet-600 rounded-2xl overflow-hidden relative shadow-2xl">
@@ -754,12 +1183,12 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <AnimationContainer delay={0.1}>
             <div className="flex flex-col items-center justify-center w-full py-2 max-w-xl mx-auto">
-              <MagicBadge title="Simple Pricing" />
+              <MagicBadge title={t.pricing} />
               <h2 className="text-center text-3xl md:text-5xl !leading-[1.1] font-bold text-gray-900 mt-6">
-                Choose a plan that works for you
+                {t.pricingTitle}
               </h2>
               <p className="mt-4 text-center text-lg text-gray-600 max-w-lg">
-                Get started with EZDocu today and enjoy more features with our pro plans.
+                {t.pricingDesc}
               </p>
 
               {/* Monthly/Yearly Toggle */}
@@ -772,7 +1201,7 @@ export default function Home() {
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Monthly
+                  {t.monthly}
                 </button>
                 <button
                   onClick={() => setIsYearly(true)}
@@ -782,7 +1211,7 @@ export default function Home() {
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Yearly
+                  {t.yearly}
                 </button>
               </div>
             </div>
@@ -793,8 +1222,8 @@ export default function Home() {
               {/* Free Plan */}
               <div className="relative rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:shadow-lg hover:border-gray-300 flex flex-col h-full">
                 <div className="mb-6">
-                  <h3 className="text-xl font-semibold text-gray-900">Free</h3>
-                  <p className="text-sm text-gray-500 mt-1">For most individuals</p>
+                  <h3 className="text-xl font-semibold text-gray-900">{t.free}</h3>
+                  <p className="text-sm text-gray-500 mt-1">{t.forIndividuals}</p>
                 </div>
                 <div className="flex items-baseline gap-1 mb-6">
                   <span className="text-5xl font-bold text-gray-900">$0</span>
@@ -802,28 +1231,28 @@ export default function Home() {
                 <ul className="space-y-4 text-sm text-gray-600 flex-1">
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    5 pages per month
+                    {t.pagesPerMonth}
                   </li>
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    Basic OCR extraction
+                    {t.basicOcr}
                   </li>
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    AI translation
+                    {t.aiTranslation}
                   </li>
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    Community support
+                    {t.communitySupport}
                   </li>
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    Basic certificates
+                    {t.basicCertificates}
                   </li>
                 </ul>
                 <Link href="/sign-up" className="mt-8">
                   <Button variant="outline" className="w-full h-11 rounded-lg border-gray-200">
-                    Start for free
+                    {t.startFree}
                   </Button>
                 </Link>
               </div>
@@ -832,18 +1261,18 @@ export default function Home() {
               <div className="relative rounded-2xl border-2 border-purple-500 bg-white p-6 transition-all hover:shadow-xl flex flex-col h-full">
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="bg-purple-500 text-white text-xs font-medium px-3 py-1 rounded-full">
-                    Most Popular
+                    {t.mostPopular}
                   </span>
                 </div>
                 <div className="mb-6">
-                  <h3 className="text-xl font-semibold text-gray-900">Pro</h3>
-                  <p className="text-sm text-gray-500 mt-1">For small businesses</p>
+                  <h3 className="text-xl font-semibold text-gray-900">{t.pro}</h3>
+                  <p className="text-sm text-gray-500 mt-1">{t.forSmall}</p>
                 </div>
                 <div className="flex items-baseline gap-2 mb-6">
                   <span className="text-5xl font-bold text-gray-900">
                     ${isYearly ? prices.pro.yearly : prices.pro.monthly}
                   </span>
-                  <span className="text-gray-500 text-lg">/{isYearly ? 'year' : 'month'}</span>
+                  <span className="text-gray-500 text-lg">/{isYearly ? t.year : t.month}</span>
                   {isYearly && (
                     <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2 py-1 rounded-full">
                       -12%
@@ -853,32 +1282,32 @@ export default function Home() {
                 <ul className="space-y-4 text-sm text-gray-600 flex-1">
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    100 pages per month
+                    {t.proPages}
                   </li>
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    Advanced OCR extraction
+                    {t.advancedOcr}
                   </li>
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    AI translation + editing
+                    {t.aiTranslationEdit}
                   </li>
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    Priority support
+                    {t.prioritySupport}
                   </li>
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    Custom certificates
+                    {t.customCertificates}
                   </li>
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    Audit trail
+                    {t.auditTrail}
                   </li>
                 </ul>
                 <Link href="/sign-up" className="mt-8">
                   <Button className="w-full h-11 rounded-lg bg-purple-600 hover:bg-purple-700 text-white">
-                    Get started
+                    {t.getStarted}
                   </Button>
                 </Link>
               </div>
@@ -886,14 +1315,14 @@ export default function Home() {
               {/* Business Plan */}
               <div className="relative rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:shadow-lg hover:border-gray-300 flex flex-col h-full">
                 <div className="mb-6">
-                  <h3 className="text-xl font-semibold text-gray-900">Business</h3>
-                  <p className="text-sm text-gray-500 mt-1">For large organizations</p>
+                  <h3 className="text-xl font-semibold text-gray-900">{t.business}</h3>
+                  <p className="text-sm text-gray-500 mt-1">{t.forLarge}</p>
                 </div>
                 <div className="flex items-baseline gap-2 mb-6">
                   <span className="text-5xl font-bold text-gray-900">
                     ${isYearly ? prices.business.yearly : prices.business.monthly}
                   </span>
-                  <span className="text-gray-500 text-lg">/{isYearly ? 'year' : 'month'}</span>
+                  <span className="text-gray-500 text-lg">/{isYearly ? t.year : t.month}</span>
                   {isYearly && (
                     <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2 py-1 rounded-full">
                       -12%
@@ -903,32 +1332,32 @@ export default function Home() {
                 <ul className="space-y-4 text-sm text-gray-600 flex-1">
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    Unlimited pages
+                    {t.unlimitedPages}
                   </li>
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    Premium OCR extraction
+                    {t.premiumOcr}
                   </li>
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    AI translation + editing
+                    {t.aiTranslationEdit}
                   </li>
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    Team workspace (5 users)
+                    {t.teamWorkspace}
                   </li>
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    Dedicated manager
+                    {t.dedicatedManager}
                   </li>
                   <li className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    API access
+                    {t.apiAccess}
                   </li>
                 </ul>
                 <Link href="/sign-up" className="mt-8">
                   <Button variant="outline" className="w-full h-11 rounded-lg border-gray-200">
-                    Contact team
+                    {t.contactTeam}
                   </Button>
                 </Link>
               </div>
@@ -939,7 +1368,7 @@ export default function Home() {
             <div className="flex items-center justify-center gap-6 mt-4">
               <div className="flex items-center gap-2 text-gray-600">
                 <CreditCard className="w-5 h-5" />
-                <span>No credit card required for free plan</span>
+                <span>{t.noCard}</span>
               </div>
             </div>
           </AnimationContainer>
@@ -958,38 +1387,14 @@ export default function Home() {
           <AnimationContainer delay={0.2}>
             <div className="max-w-4xl mx-auto space-y-4">
               {[
-                {
-                  question: "What types of documents can EZDocu translate?",
-                  answer: "EZDocu supports all common document types including birth certificates, marriage certificates, diplomas, transcripts, passports, driver's licenses, legal contracts, and more. We handle both scanned images and digital PDFs with our advanced OCR technology."
-                },
-                {
-                  question: "Are the translations accepted by USCIS and other government agencies?",
-                  answer: "Yes! All translations completed through EZDocu include a Certificate of Translation Accuracy that meets USCIS requirements. Our certified translations are accepted by immigration offices, courts, universities, and government agencies worldwide."
-                },
-                {
-                  question: "How does the AI translation work?",
-                  answer: "Our AI uses advanced language models trained specifically on legal and official document terminology. It provides accurate initial translations that certified translators can then review and finalize. This hybrid approach ensures both speed and accuracy."
-                },
-                {
-                  question: "How long does it take to get a certified translation?",
-                  answer: "Most single-page documents are completed within 24 hours. Complex multi-page documents may take 2-3 business days. We also offer rush processing for urgent requests at an additional fee."
-                },
-                {
-                  question: "Can I edit the translation before finalizing?",
-                  answer: "Absolutely! EZDocu provides a side-by-side editor where you can review the AI-generated translation, make adjustments, and ensure everything is perfect before generating the certified document."
-                },
-                {
-                  question: "What's included in the free plan?",
-                  answer: "The free plan includes 5 pages per month, basic OCR extraction, AI translation assistance, community support, and basic certification. It's perfect for individuals with occasional translation needs."
-                },
-                {
-                  question: "Is my data secure?",
-                  answer: "Yes, security is our top priority. All documents are encrypted in transit and at rest. We're SOC 2 certified and HIPAA compliant. Your documents are automatically deleted after 30 days, or you can delete them immediately after download."
-                },
-                {
-                  question: "Do you offer team or enterprise plans?",
-                  answer: "Yes! Our Business plan includes unlimited pages, team workspaces for up to 5 users, dedicated account management, API access, and custom integrations. Contact our sales team for enterprise pricing with additional features."
-                }
+                { question: t.faq1Q, answer: t.faq1A },
+                { question: t.faq2Q, answer: t.faq2A },
+                { question: t.faq3Q, answer: t.faq3A },
+                { question: t.faq4Q, answer: t.faq4A },
+                { question: t.faq5Q, answer: t.faq5A },
+                { question: t.faq6Q, answer: t.faq6A },
+                { question: t.faq7Q, answer: t.faq7A },
+                { question: t.faq8Q, answer: t.faq8A },
               ].map((faq, index) => (
                 <FaqItem key={index} question={faq.question} answer={faq.answer} index={index} />
               ))}
@@ -998,11 +1403,11 @@ export default function Home() {
 
           <AnimationContainer delay={0.3}>
             <div className="mt-12 text-center">
-              <p className="text-gray-600 mb-4">Still have questions?</p>
+              <p className="text-gray-600 mb-4">{t.stillQuestions}</p>
               <Link href="mailto:support@ezdocu.com">
                 <Button variant="outline" className="rounded-lg border-purple-200 text-purple-700 hover:bg-purple-50">
                   <HelpCircle className="w-4 h-4 mr-2" />
-                  Contact Support
+                  {t.contactSupport}
                 </Button>
               </Link>
             </div>
@@ -1057,15 +1462,15 @@ export default function Home() {
             <AnimationContainer delay={0.1}>
               <div className="flex flex-col items-center justify-center text-center">
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
-                  Trusted{" "}
-                  <span className="text-purple-200">Worldwide</span>
+                  {t.trustedWorldwide}{" "}
+                  <span className="text-purple-200">{t.worldwide}</span>
                 </h2>
                 <p className="text-purple-100 max-w-md mx-auto text-lg mb-6">
-                  Join thousands of certified translators who save hours every week with EZDocu.
+                  {t.ctaDesc}
                 </p>
                 <Link href="/sign-up">
                   <Button size="lg" className="bg-white hover:bg-gray-100 text-purple-900 rounded-full px-8 h-12 font-semibold shadow-lg">
-                    Start your free trial
+                    {t.startYourTrial}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </Link>
@@ -1086,37 +1491,37 @@ export default function Home() {
                 <Image src="https://res.cloudinary.com/drsvq4tm6/image/upload/v1768539883/Disen%CC%83o_sin_ti%CC%81tulo_2_tbvifi.png" alt="EZDocu" width={120} height={32} className="h-8 w-auto" />
               </Link>
               <p className="text-sm text-gray-500 max-w-xs">
-                Professional document translation platform for certified translators.
+                {t.footerDesc}
               </p>
             </div>
 
             {/* Product links */}
             <div>
-              <h4 className="font-medium text-gray-900 mb-4">Product</h4>
+              <h4 className="font-medium text-gray-900 mb-4">{t.product}</h4>
               <ul className="space-y-3 text-sm text-gray-600">
-                <li><Link href="#features" className="hover:text-gray-900 transition-colors">Features</Link></li>
-                <li><Link href="#pricing" className="hover:text-gray-900 transition-colors">Pricing</Link></li>
-                <li><Link href="#how-it-works" className="hover:text-gray-900 transition-colors">How it works</Link></li>
+                <li><Link href="#features" className="hover:text-gray-900 transition-colors">{t.features}</Link></li>
+                <li><Link href="#pricing" className="hover:text-gray-900 transition-colors">{t.pricing}</Link></li>
+                <li><Link href="#how-it-works" className="hover:text-gray-900 transition-colors">{t.howItWorks}</Link></li>
               </ul>
             </div>
 
             {/* Resources links */}
             <div>
-              <h4 className="font-medium text-gray-900 mb-4">Resources</h4>
+              <h4 className="font-medium text-gray-900 mb-4">{t.resources}</h4>
               <ul className="space-y-3 text-sm text-gray-600">
-                <li><a href="#" className="hover:text-gray-900 transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-gray-900 transition-colors">Support</a></li>
-                <li><a href="#" className="hover:text-gray-900 transition-colors">API Docs</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">{t.blog}</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">{t.support}</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">{t.apiDocs}</a></li>
               </ul>
             </div>
 
             {/* Company links */}
             <div>
-              <h4 className="font-medium text-gray-900 mb-4">Company</h4>
+              <h4 className="font-medium text-gray-900 mb-4">{t.company}</h4>
               <ul className="space-y-3 text-sm text-gray-600">
-                <li><a href="#" className="hover:text-gray-900 transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-gray-900 transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-gray-900 transition-colors">Terms & Conditions</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">{t.aboutUs}</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">{t.privacyPolicy}</a></li>
+                <li><a href="#" className="hover:text-gray-900 transition-colors">{t.termsConditions}</a></li>
               </ul>
             </div>
           </div>
