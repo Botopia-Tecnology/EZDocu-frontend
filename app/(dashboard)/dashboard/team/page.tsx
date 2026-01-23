@@ -19,8 +19,9 @@ export default async function TranslatorTeamPage() {
                 members={[]}
                 pendingInvites={[]}
                 accountName={session.accounts?.[0]?.name || 'My Account'}
-                ownerId=""
+                ownerId={session.user.id}
                 currentUserId={session.user.id}
+                userType={session.userType}
             />
         );
     }
@@ -32,6 +33,7 @@ export default async function TranslatorTeamPage() {
             accountName={teamData.account.name}
             ownerId={teamData.account.ownerId}
             currentUserId={session.user.id}
+            userType={session.userType}
         />
     );
 }

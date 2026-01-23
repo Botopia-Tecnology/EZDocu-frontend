@@ -11,6 +11,7 @@ export interface TeamMember {
     lastName: string;
     role: string;
     isOwner: boolean;
+    isActive: boolean;
     joinedAt: string;
 }
 
@@ -63,7 +64,7 @@ export async function getTeamData(): Promise<TeamData | null> {
     }
 }
 
-export async function inviteMember(email: string): Promise<{ success: boolean; message: string }> {
+export async function inviteMember(email: string, firstName: string, lastName: string): Promise<{ success: boolean; message: string }> {
     const session = await getSession();
     if (!session || !session.activeAccountId || !session.accessToken) {
         return { success: false, message: 'Not authenticated' };
@@ -78,7 +79,7 @@ export async function inviteMember(email: string): Promise<{ success: boolean; m
                     'Authorization': `Bearer ${session.accessToken}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email }),
+                body: JSON.stringify({ email, firstName, lastName }),
             }
         );
 
@@ -189,5 +190,39 @@ export async function removeMember(memberId: string): Promise<{ success: boolean
     } catch (error) {
         console.error('Error removing member:', error);
         return { success: false, message: 'Failed to remove member' };
+    }
+}
+
+export async function toggleMemberStatus(memberId: string, isActive: boolean): Promise<{ success: boolean; message: string }> {
+    const session = await getSession();
+    if (!session || !session.activeAccountId || !session.accessToken) {
+        return { success: false, message: 'Not authenticated' };
+    }
+
+    try {
+        const url = `${API_URL}/auth/team/${session.activeAccountId}/member/${memberId}/status`;
+        console.log('Calling API:', url, { isActive });
+
+        const response = await fetch(url, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${session.accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ isActive }),
+        });
+
+        const data = await response.json();
+        console.log('API Response:', response.status, data);
+
+        if (data.status === 200) {
+            revalidatePath('/dashboard/team');
+            return { success: true, message: isActive ? 'Member activated' : 'Member deactivated' };
+        }
+
+        return { success: false, message: data.message || 'Failed to update member status' };
+    } catch (error) {
+        console.error('Error toggling member status:', error);
+        return { success: false, message: 'Failed to update member status' };
     }
 }

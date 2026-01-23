@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -20,15 +19,7 @@ import {
   FileText,
   ToggleRight,
   Award,
-  ChevronDown,
-  Globe
 } from 'lucide-react';
-
-type Lang = 'en' | 'es' | 'pt';
-
-const langNames: Record<Lang, string> = { en: 'EN', es: 'ES', pt: 'PT' };
-const langFlags: Record<Lang, string> = { en: '🇺🇸', es: '🇪🇸', pt: '🇧🇷' };
-const langLabels: Record<Lang, string> = { en: 'English', es: 'Español', pt: 'Português' };
 
 type UserType = 'admin' | 'team' | 'member';
 
@@ -73,21 +64,6 @@ interface SidebarProps {
 export function Sidebar({ userType, userName, accountName }: SidebarProps) {
   const pathname = usePathname();
   const navItems = navByRole[userType] || navByRole.team;
-  const [lang, setLang] = useState<Lang>('en');
-  const [langMenuOpen, setLangMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('lang') as Lang;
-    if (saved && ['en', 'es', 'pt'].includes(saved)) {
-      setLang(saved);
-    }
-  }, []);
-
-  const handleLangChange = (newLang: Lang) => {
-    setLang(newLang);
-    localStorage.setItem('lang', newLang);
-    setLangMenuOpen(false);
-  };
 
   const handleLogout = async () => {
     await fetch('/api/auth/session', { method: 'DELETE' });
@@ -140,37 +116,6 @@ export function Sidebar({ userType, userName, accountName }: SidebarProps) {
           );
         })}
       </nav>
-
-      {/* Language Selector */}
-      <div className="px-3 py-3 border-t border-gray-100/80">
-        <div className="relative">
-          <button
-            onClick={() => setLangMenuOpen(!langMenuOpen)}
-            className="flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-purple-50 hover:text-purple-700 transition-colors cursor-pointer"
-          >
-            <div className="flex items-center gap-2">
-              <Globe className="h-4 w-4 text-gray-400" />
-              <span>{langFlags[lang]}</span>
-              <span>{langLabels[lang]}</span>
-            </div>
-            <ChevronDown className={`h-4 w-4 transition-transform ${langMenuOpen ? 'rotate-180' : ''}`} />
-          </button>
-          {langMenuOpen && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
-              {(['en', 'es', 'pt'] as Lang[]).map((l) => (
-                <button
-                  key={l}
-                  onClick={() => handleLangChange(l)}
-                  className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 hover:bg-purple-50 transition-colors cursor-pointer ${lang === l ? 'bg-purple-50 text-purple-600' : 'text-gray-700'}`}
-                >
-                  <span>{langFlags[l]}</span>
-                  <span>{langLabels[l]}</span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
 
       {/* User section */}
       <div className="p-4 border-t border-gray-100/80">

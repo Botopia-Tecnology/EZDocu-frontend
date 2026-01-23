@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
+import { Switch } from '@/components/ui/switch';
 import {
     Users,
     Mail,
@@ -18,7 +20,8 @@ import {
     inviteMember,
     cancelInvite,
     resendInvite,
-    removeMember
+    removeMember,
+    toggleMemberStatus
 } from './actions';
 
 interface TeamClientProps {
@@ -27,6 +30,7 @@ interface TeamClientProps {
     accountName: string;
     ownerId: string;
     currentUserId: string;
+    userType: 'admin' | 'team' | 'member';
 }
 
 export function TeamClient({
@@ -34,15 +38,27 @@ export function TeamClient({
     pendingInvites,
     accountName,
     ownerId,
-    currentUserId
+    currentUserId,
+    userType
 }: TeamClientProps) {
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
+    const [inviteFirstName, setInviteFirstName] = useState('');
+    const [inviteLastName, setInviteLastName] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-    const isOwner = currentUserId === ownerId;
+    // Confirmation modal state
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean;
+        memberId: string;
+        memberName: string;
+    }>({ isOpen: false, memberId: '', memberName: '' });
+    const [isConfirmLoading, setIsConfirmLoading] = useState(false);
+
+    // User can manage team if they're the owner OR if they have team role
+    const isOwner = currentUserId === ownerId || userType === 'team';
 
     const roleConfig: Record<string, { color: string; bg: string }> = {
         team: { color: 'text-amber-700', bg: 'bg-amber-50' },
@@ -55,10 +71,12 @@ export function TeamClient({
         setIsSubmitting(true);
         setError('');
 
-        const result = await inviteMember(inviteEmail);
+        const result = await inviteMember(inviteEmail, inviteFirstName, inviteLastName);
 
         if (result.success) {
             setInviteEmail('');
+            setInviteFirstName('');
+            setInviteLastName('');
             setIsInviteModalOpen(false);
         } else {
             setError(result.message);
@@ -79,10 +97,26 @@ export function TeamClient({
         setActionLoadingId(null);
     };
 
-    const handleRemoveMember = async (memberId: string) => {
-        if (!confirm('Are you sure you want to remove this member?')) return;
+    const openRemoveConfirm = (member: TeamMember) => {
+        setConfirmModal({
+            isOpen: true,
+            memberId: member.id,
+            memberName: `${member.firstName} ${member.lastName}`,
+        });
+    };
+
+    const handleRemoveMember = async () => {
+        setIsConfirmLoading(true);
+        await removeMember(confirmModal.memberId);
+        setIsConfirmLoading(false);
+        setConfirmModal({ isOpen: false, memberId: '', memberName: '' });
+    };
+
+    const handleToggleStatus = async (memberId: string, currentStatus: boolean) => {
+        console.log('Toggle status called:', { memberId, currentStatus, newStatus: !currentStatus });
         setActionLoadingId(memberId);
-        await removeMember(memberId);
+        const result = await toggleMemberStatus(memberId, !currentStatus);
+        console.log('Toggle result:', result);
         setActionLoadingId(null);
     };
 
@@ -152,10 +186,11 @@ export function TeamClient({
                     ) : (
                         members.map((member) => {
                             const role = roleConfig[member.role] || roleConfig.member;
+                            const isInactive = member.isActive === false;
                             return (
-                                <div key={member.id} className="px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                                <div key={member.id} className={`px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors ${isInactive ? 'opacity-60' : ''}`}>
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 bg-gradient-to-br from-gray-700 to-gray-900 rounded-full flex items-center justify-center text-white font-medium">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium ${isInactive ? 'bg-gray-400' : 'bg-gradient-to-br from-gray-700 to-gray-900'}`}>
                                             {member.firstName?.[0]}{member.lastName?.[0]}
                                         </div>
                                         <div>
@@ -166,6 +201,11 @@ export function TeamClient({
                                                 {member.isOwner && (
                                                     <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
                                                         Owner
+                                                    </span>
+                                                )}
+                                                {isInactive && (
+                                                    <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+                                                        Inactive
                                                     </span>
                                                 )}
                                             </div>
@@ -181,19 +221,32 @@ export function TeamClient({
                                             <p className="text-xs text-gray-500">{formatDate(member.joinedAt)}</p>
                                         </div>
                                         {isOwner && !member.isOwner && (
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                                onClick={() => handleRemoveMember(member.id)}
-                                                disabled={actionLoadingId === member.id}
-                                            >
-                                                {actionLoadingId === member.id ? (
-                                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    <X className="h-4 w-4" />
-                                                )}
-                                            </Button>
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs text-gray-500">
+                                                        {member.isActive !== false ? 'Active' : 'Inactive'}
+                                                    </span>
+                                                    <Switch
+                                                        checked={member.isActive !== false}
+                                                        onChange={() => handleToggleStatus(member.id, member.isActive !== false)}
+                                                        disabled={actionLoadingId === member.id}
+                                                        size="sm"
+                                                    />
+                                                </div>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={() => openRemoveConfirm(member)}
+                                                    disabled={actionLoadingId === member.id}
+                                                >
+                                                    {actionLoadingId === member.id ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <X className="h-4 w-4" />
+                                                    )}
+                                                </Button>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -288,12 +341,42 @@ export function TeamClient({
                                     setIsInviteModalOpen(false);
                                     setError('');
                                     setInviteEmail('');
+                                    setInviteFirstName('');
+                                    setInviteLastName('');
                                 }}
                             >
                                 <X className="h-4 w-4" />
                             </Button>
                         </div>
                         <form onSubmit={handleInvite}>
+                            <div className="grid grid-cols-2 gap-3 mb-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        First Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={inviteFirstName}
+                                        onChange={(e) => setInviteFirstName(e.target.value)}
+                                        placeholder="John"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Last Name
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={inviteLastName}
+                                        onChange={(e) => setInviteLastName(e.target.value)}
+                                        placeholder="Doe"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        required
+                                    />
+                                </div>
+                            </div>
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Email Address
@@ -318,6 +401,8 @@ export function TeamClient({
                                         setIsInviteModalOpen(false);
                                         setError('');
                                         setInviteEmail('');
+                                        setInviteFirstName('');
+                                        setInviteLastName('');
                                     }}
                                 >
                                     Cancel
@@ -341,6 +426,24 @@ export function TeamClient({
                     </div>
                 </div>
             )}
+
+            {/* Remove Member Confirmation Modal */}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal({ isOpen: false, memberId: '', memberName: '' })}
+                onConfirm={handleRemoveMember}
+                title="Remove Team Member"
+                message={
+                    <>
+                        Are you sure you want to remove <strong>{confirmModal.memberName}</strong> from your team?
+                        This action cannot be undone. The member will lose access to all team resources immediately.
+                    </>
+                }
+                confirmText="Remove Member"
+                cancelText="Cancel"
+                variant="danger"
+                isLoading={isConfirmLoading}
+            />
         </div>
     );
 }

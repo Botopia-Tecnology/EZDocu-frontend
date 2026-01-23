@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, CheckCircle, ArrowLeft, ArrowUpRight } from 'lucide-react';
+import { Loader2, CheckCircle, ArrowLeft, ArrowUpRight, Eye, EyeOff, X, Mail, KeyRound, RefreshCw } from 'lucide-react';
 
 type UserType = 'admin' | 'team' | 'member';
 
@@ -28,6 +28,18 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
 
   const [error, setError] = useState('');
   const [pending, setPending] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotStep, setForgotStep] = useState<'email' | 'code' | 'password' | 'success'>('email');
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotCode, setForgotCode] = useState(['', '', '', '', '', '']);
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showForgotConfirmPassword, setShowForgotConfirmPassword] = useState(false);
+  const [forgotPending, setForgotPending] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -94,6 +106,154 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
       setPending(false);
     }
   };
+
+  // Send verification code
+  const handleSendCode = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setForgotError('');
+    setForgotPending(true);
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      const response = await fetch(`${apiUrl}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === 200) {
+        setForgotStep('code');
+        setResendCooldown(60);
+      } else {
+        setForgotError(data.message || 'Failed to send reset code');
+      }
+    } catch (err) {
+      console.error('Forgot password error:', err);
+      setForgotError('Connection error. Please try again.');
+    } finally {
+      setForgotPending(false);
+    }
+  };
+
+  // Resend code
+  const handleResendCode = async () => {
+    if (resendCooldown > 0) return;
+    setForgotPending(true);
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      const response = await fetch(`${apiUrl}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+
+      const data = await response.json();
+      if (data.status === 200) {
+        setResendCooldown(60);
+        setForgotCode(['', '', '', '', '', '']);
+      }
+    } catch (err) {
+      console.error('Resend error:', err);
+    } finally {
+      setForgotPending(false);
+    }
+  };
+
+  // Handle code input
+  const handleCodeChange = (index: number, value: string) => {
+    if (value.length > 1) {
+      const digits = value.replace(/\D/g, '').slice(0, 6).split('');
+      const newCode = [...forgotCode];
+      digits.forEach((digit, i) => {
+        if (index + i < 6) {
+          newCode[index + i] = digit;
+        }
+      });
+      setForgotCode(newCode);
+    } else {
+      const newCode = [...forgotCode];
+      newCode[index] = value.replace(/\D/g, '');
+      setForgotCode(newCode);
+    }
+  };
+
+  // Verify code and go to password step
+  const handleVerifyCode = () => {
+    const codeString = forgotCode.join('');
+    if (codeString.length !== 6) {
+      setForgotError('Please enter the 6-digit code');
+      return;
+    }
+    setForgotError('');
+    setForgotStep('password');
+  };
+
+  // Reset password
+  const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setForgotError('');
+
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setForgotError('Passwords do not match');
+      return;
+    }
+
+    if (forgotNewPassword.length < 8) {
+      setForgotError('Password must be at least 8 characters');
+      return;
+    }
+
+    setForgotPending(true);
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      const response = await fetch(`${apiUrl}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: forgotEmail,
+          code: forgotCode.join(''),
+          newPassword: forgotNewPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === 200) {
+        setForgotStep('success');
+      } else {
+        setForgotError(data.message || 'Failed to reset password');
+      }
+    } catch (err) {
+      console.error('Reset password error:', err);
+      setForgotError('Connection error. Please try again.');
+    } finally {
+      setForgotPending(false);
+    }
+  };
+
+  // Reset modal state
+  const resetForgotModal = () => {
+    setShowForgotModal(false);
+    setForgotStep('email');
+    setForgotEmail('');
+    setForgotCode(['', '', '', '', '', '']);
+    setForgotNewPassword('');
+    setForgotConfirmPassword('');
+    setForgotError('');
+    setResendCooldown(0);
+  };
+
+  // Cooldown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   return (
     <div className="min-h-screen flex">
@@ -198,26 +358,32 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
             </div>
 
             <div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                  Password
-                </Label>
-                {mode === 'signin' && (
-                  <Link href="/forgot-password" className="text-sm text-gray-500 hover:text-gray-900">
-                    Forgot password?
-                  </Link>
-                )}
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                Password
+              </Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                  required
+                  minLength={8}
+                  className="mt-1.5 h-12 rounded-lg border-gray-200 focus:border-gray-900 focus:ring-gray-900 pr-12"
+                  placeholder={mode === 'signin' ? 'Enter your password' : 'Min. 8 characters'}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 mt-0.5 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
+                </button>
               </div>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                required
-                minLength={8}
-                className="mt-1.5 h-12 rounded-lg border-gray-200 focus:border-gray-900 focus:ring-gray-900"
-                placeholder={mode === 'signin' ? 'Enter your password' : 'Min. 8 characters'}
-              />
             </div>
 
             {error && (
@@ -240,7 +406,20 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
                 mode === 'signin' ? 'Sign in' : 'Create account'
               )}
             </Button>
+
           </form>
+
+          {mode === 'signin' && (
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(true)}
+                className="text-sm text-purple-600 hover:text-purple-800 hover:underline cursor-pointer"
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
 
           {/* Footer link */}
           <p className="mt-8 text-center text-sm text-gray-500">
@@ -360,6 +539,289 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={resetForgotModal}
+          />
+
+          {/* Modal */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8">
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={resetForgotModal}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Step 1: Email */}
+            {forgotStep === 'email' && (
+              <>
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <Mail className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Forgot password?
+                  </h2>
+                  <p className="text-gray-500 mt-2 text-sm">
+                    No worries, we'll send you a verification code.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSendCode}>
+                  <div className="mb-4">
+                    <Label htmlFor="forgotEmail" className="text-sm font-medium text-gray-700">
+                      Email address
+                    </Label>
+                    <Input
+                      id="forgotEmail"
+                      type="email"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      required
+                      className="mt-1.5 h-12 rounded-lg border-gray-200 focus:border-purple-500 focus:ring-purple-500"
+                      placeholder="Enter your email"
+                      autoFocus
+                    />
+                  </div>
+
+                  {forgotError && (
+                    <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                      {forgotError}
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
+                    disabled={forgotPending}
+                  >
+                    {forgotPending ? (
+                      <>
+                        <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                        Sending code...
+                      </>
+                    ) : (
+                      'Send verification code'
+                    )}
+                  </Button>
+                </form>
+
+                <p className="mt-6 text-center text-sm text-gray-500">
+                  Remember your password?{' '}
+                  <button
+                    type="button"
+                    onClick={resetForgotModal}
+                    className="font-medium text-purple-600 hover:text-purple-700"
+                  >
+                    Back to sign in
+                  </button>
+                </p>
+              </>
+            )}
+
+            {/* Step 2: Enter Code */}
+            {forgotStep === 'code' && (
+              <>
+                {/* Back button */}
+                <button
+                  type="button"
+                  onClick={() => setForgotStep('email')}
+                  className="absolute top-4 left-4 text-gray-400 hover:text-gray-600 flex items-center gap-1 text-sm"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <Mail className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Check your email
+                  </h2>
+                  <p className="text-gray-500 mt-2 text-sm">
+                    We sent a 6-digit code to<br />
+                    <span className="font-medium text-gray-900">{forgotEmail}</span>
+                  </p>
+                </div>
+
+                <div className="mb-4">
+                  <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                    Verification code
+                  </Label>
+                  <div className="flex gap-2 justify-between">
+                    {forgotCode.map((digit, index) => (
+                      <input
+                        key={index}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={6}
+                        value={digit}
+                        onChange={(e) => handleCodeChange(index, e.target.value)}
+                        className="w-12 h-14 text-center text-xl font-semibold border border-gray-200 rounded-lg focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none transition-all"
+                      />
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-sm text-gray-500">Didn't receive the code?</span>
+                    <button
+                      type="button"
+                      onClick={handleResendCode}
+                      disabled={resendCooldown > 0 || forgotPending}
+                      className="text-sm font-medium text-purple-600 hover:text-purple-700 disabled:text-gray-400 flex items-center gap-1"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+                    </button>
+                  </div>
+                </div>
+
+                {forgotError && (
+                  <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                    {forgotError}
+                  </div>
+                )}
+
+                <Button
+                  type="button"
+                  onClick={handleVerifyCode}
+                  className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
+                >
+                  Continue
+                </Button>
+              </>
+            )}
+
+            {/* Step 3: New Password */}
+            {forgotStep === 'password' && (
+              <>
+                {/* Back button */}
+                <button
+                  type="button"
+                  onClick={() => setForgotStep('code')}
+                  className="absolute top-4 left-4 text-gray-400 hover:text-gray-600 flex items-center gap-1 text-sm"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <KeyRound className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold text-gray-900">
+                    Set new password
+                  </h2>
+                  <p className="text-gray-500 mt-2 text-sm">
+                    Create a strong password for your account.
+                  </p>
+                </div>
+
+                <form onSubmit={handleResetPassword}>
+                  <div className="mb-4">
+                    <Label htmlFor="newPassword" className="text-sm font-medium text-gray-700">
+                      New password
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="newPassword"
+                        type={showForgotPassword ? 'text' : 'password'}
+                        value={forgotNewPassword}
+                        onChange={(e) => setForgotNewPassword(e.target.value)}
+                        required
+                        minLength={8}
+                        className="mt-1.5 h-12 rounded-lg border-gray-200 focus:border-purple-500 focus:ring-purple-500 pr-12"
+                        placeholder="Min. 8 characters"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotPassword(!showForgotPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 mt-0.5 text-gray-400 hover:text-gray-600"
+                      >
+                        {showForgotPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <Label htmlFor="confirmNewPassword" className="text-sm font-medium text-gray-700">
+                      Confirm password
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmNewPassword"
+                        type={showForgotConfirmPassword ? 'text' : 'password'}
+                        value={forgotConfirmPassword}
+                        onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                        required
+                        minLength={8}
+                        className="mt-1.5 h-12 rounded-lg border-gray-200 focus:border-purple-500 focus:ring-purple-500 pr-12"
+                        placeholder="Confirm your password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowForgotConfirmPassword(!showForgotConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 mt-0.5 text-gray-400 hover:text-gray-600"
+                      >
+                        {showForgotConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {forgotError && (
+                    <div className="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                      {forgotError}
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
+                    disabled={forgotPending}
+                  >
+                    {forgotPending ? (
+                      <>
+                        <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                        Resetting password...
+                      </>
+                    ) : (
+                      'Reset password'
+                    )}
+                  </Button>
+                </form>
+              </>
+            )}
+
+            {/* Step 4: Success */}
+            {forgotStep === 'success' && (
+              <div className="text-center py-4">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                  Password reset successful!
+                </h2>
+                <p className="text-gray-500 mb-6">
+                  Your password has been changed successfully.
+                </p>
+                <Button
+                  type="button"
+                  onClick={resetForgotModal}
+                  className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
+                >
+                  Back to sign in
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
