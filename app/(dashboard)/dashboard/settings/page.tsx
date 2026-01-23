@@ -9,5 +9,15 @@ export default async function SettingsPage() {
     redirect('/sign-in');
   }
 
-  return <SettingsClient session={session} />;
+  // Convert undefined to null for compatibility
+  const sessionWithNulls = {
+    ...session,
+    user: {
+      ...session.user,
+      firstName: session.user.firstName ?? null,
+      lastName: session.user.lastName ?? null,
+    }
+  };
+
+  return <SettingsClient session={sessionWithNulls} />;
 }
