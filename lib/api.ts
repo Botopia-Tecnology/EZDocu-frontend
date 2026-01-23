@@ -12,10 +12,9 @@ export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}):
         ...fetchOptions.headers,
     };
 
-    // If we had a token, we'd add it here. For now, handled by session cookies or gateway simple auth.
-    // if (token) {
-    //   headers['Authorization'] = `Bearer ${token}`;
-    // }
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
 
     const response = await fetch(`${API_URL}${endpoint}`, {
         ...fetchOptions,
