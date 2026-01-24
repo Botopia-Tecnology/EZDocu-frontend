@@ -31,13 +31,6 @@ export default function TranslatorCreditsPage() {
   const usedThisMonth = 350;
   const totalPurchased = 5000;
 
-  const creditPackages = [
-    { credits: 100, price: 100, popular: false },
-    { credits: 500, price: 450, popular: true, savings: '10%' },
-    { credits: 1000, price: 850, popular: false, savings: '15%' },
-    { credits: 2500, price: 2000, popular: false, savings: '20%' },
-  ];
-
   const recentTransactions = [
     { id: 1, type: 'purchase', credits: 500, date: '2024-01-10' },
     { id: 2, type: 'usage', credits: -8, description: 'Order ORD-002 (4 pages, text)', date: '2024-01-15' },
@@ -74,44 +67,25 @@ export default function TranslatorCreditsPage() {
       </div>
 
       {/* Balance Card */}
-      <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 text-white">
+      <div className="bg-gradient-to-br from-purple-600 to-purple-500 rounded-2xl p-6 text-white">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-gray-400 text-sm">Available Balance</p>
+            <p className="text-purple-200 text-sm">Available Balance</p>
             <p className="text-4xl font-bold mt-2">{creditBalance.toLocaleString()}</p>
-            <p className="text-gray-400 text-sm mt-1">credits (1 credit = $1 USD)</p>
+            <p className="text-purple-200 text-sm mt-1">credits (1 credit = $1 USD)</p>
           </div>
-          <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
+          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
             <CreditCard className="h-6 w-6" />
           </div>
         </div>
-        <div className="mt-6 pt-6 border-t border-white/10 grid grid-cols-2 gap-4">
-          <div><p className="text-gray-400 text-xs">Used This Month</p><p className="text-xl font-semibold mt-1">{usedThisMonth}</p></div>
-          <div><p className="text-gray-400 text-xs">Total Purchased</p><p className="text-xl font-semibold mt-1">{totalPurchased.toLocaleString()}</p></div>
+        <div className="mt-6 pt-6 border-t border-white/20 grid grid-cols-2 gap-4">
+          <div><p className="text-purple-200 text-xs">Used This Month</p><p className="text-xl font-semibold mt-1">{usedThisMonth}</p></div>
+          <div><p className="text-purple-200 text-xs">Total Purchased</p><p className="text-xl font-semibold mt-1">{totalPurchased.toLocaleString()}</p></div>
         </div>
       </div>
 
       {/* Auto-Recharge */}
       <AutoRechargeSettings />
-
-      {/* Credit Packages */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Buy Credits</h2>
-        <div className="grid grid-cols-4 gap-4">
-          {creditPackages.map((pkg, i) => (
-            <div key={i} className={`relative bg-white rounded-xl border-2 p-5 transition-all hover:border-gray-300 ${pkg.popular ? 'border-purple-500' : 'border-gray-200'}`}>
-              {pkg.popular && <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-xs font-medium px-3 py-1 rounded-full">Most Popular</span>}
-              <div className="text-center">
-                <p className="text-3xl font-bold text-gray-900">{pkg.credits.toLocaleString()}</p>
-                <p className="text-sm text-gray-500 mt-1">credits</p>
-                <div className="mt-4"><span className="text-2xl font-semibold text-gray-900">${pkg.price}</span></div>
-                {pkg.savings && <p className="text-xs text-green-600 font-medium mt-1">Save {pkg.savings}</p>}
-                <Button className="w-full mt-4 rounded-lg bg-purple-600 hover:bg-purple-700 text-white">Buy Now</Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Subscription Plans */}
       <div>

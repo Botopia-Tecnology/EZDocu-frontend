@@ -45,6 +45,47 @@ export async function updateProfile(firstName: string, lastName: string) {
     }
 }
 
+export async function updateAccountName(accountId: string, name: string) {
+    const session = await getSession();
+
+    if (!session || !session.accessToken) {
+        return { status: 401, message: 'Not authenticated' };
+    }
+
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        const response = await fetch(`${apiUrl}/auth/accounts/${accountId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.accessToken}`,
+            },
+            body: JSON.stringify({ name }),
+        });
+
+        const result = await response.json();
+
+        // If successful, update the local session with new account name
+        if (result.status === 200) {
+            const updatedAccounts = session.accounts.map(acc =>
+                acc.id === accountId ? { ...acc, name } : acc
+            );
+            await setSession(
+                session.user,
+                session.userType,
+                updatedAccounts,
+                session.accessToken,
+                session.activeAccountId
+            );
+        }
+
+        return result;
+    } catch (error) {
+        console.error('Update account name error:', error);
+        return { status: 500, message: 'Connection error. Please try again.' };
+    }
+}
+
 export async function changePassword(currentPassword: string, newPassword: string) {
     const session = await getSession();
 

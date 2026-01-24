@@ -61,9 +61,9 @@ export function TeamClient({
     const isOwner = currentUserId === ownerId || userType === 'team';
 
     const roleConfig: Record<string, { color: string; bg: string }> = {
-        team: { color: 'text-amber-700', bg: 'bg-amber-50' },
-        member: { color: 'text-blue-700', bg: 'bg-blue-50' },
-        admin: { color: 'text-violet-700', bg: 'bg-violet-50' },
+        team: { color: 'text-purple-700', bg: 'bg-purple-100' },
+        member: { color: 'text-purple-700', bg: 'bg-purple-100' },
+        admin: { color: 'text-purple-700', bg: 'bg-purple-100' },
     };
 
     const handleInvite = async (e: React.FormEvent) => {
@@ -151,8 +151,8 @@ export function TeamClient({
             <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                            <Users className="h-5 w-5 text-blue-600" />
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <Users className="h-5 w-5 text-purple-600" />
                         </div>
                         <div>
                             <p className="text-2xl font-semibold text-gray-900">{members.length}</p>
@@ -162,8 +162,8 @@ export function TeamClient({
                 </div>
                 <div className="bg-white rounded-xl border border-gray-200 p-5">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center">
-                            <Mail className="h-5 w-5 text-amber-600" />
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <Mail className="h-5 w-5 text-purple-600" />
                         </div>
                         <div>
                             <p className="text-2xl font-semibold text-gray-900">{pendingInvites.length}</p>

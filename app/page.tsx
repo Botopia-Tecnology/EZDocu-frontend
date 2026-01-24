@@ -399,6 +399,8 @@ import {
   Globe,
   Award,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Plus,
   Minus,
   HelpCircle,
@@ -519,6 +521,7 @@ export default function Home() {
   const [lang, setLang] = useState<Lang>('en');
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [planStartIndex, setPlanStartIndex] = useState(0);
 
   useEffect(() => {
     // Detect browser language
@@ -1254,7 +1257,7 @@ export default function Home() {
                   onClick={() => setIsYearly(false)}
                   className={`px-4 py-2 text-sm font-medium rounded-md transition-all cursor-pointer ${
                     !isYearly
-                      ? 'bg-white text-gray-900 shadow-sm'
+                      ? 'bg-purple-600 text-white shadow-sm'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -1264,7 +1267,7 @@ export default function Home() {
                   onClick={() => setIsYearly(true)}
                   className={`px-4 py-2 text-sm font-medium rounded-md transition-all cursor-pointer ${
                     isYearly
-                      ? 'bg-gray-900 text-white shadow-sm'
+                      ? 'bg-purple-600 text-white shadow-sm'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -1275,74 +1278,120 @@ export default function Home() {
           </AnimationContainer>
 
           <AnimationContainer delay={0.2}>
-            <div className="grid md:grid-cols-3 gap-6 py-4">
-              {/* Dynamic Plans from Database */}
-              {(plans.length > 0 ? plans : [
+            {(() => {
+              const allPlans = plans.length > 0 ? plans : [
                 { id: 1, slug: 'free', name: 'Free', description: t.forIndividuals, monthlyPrice: '0', yearlyPrice: '0', yearlyDiscount: 0, benefits: [t.pagesPerMonth, t.basicOcr, t.aiTranslation, t.communitySupport, t.basicCertificates], isPopular: false, buttonText: t.startFree, buttonVariant: 'outline' },
                 { id: 2, slug: 'pro', name: 'Pro', description: t.forSmall, monthlyPrice: '29', yearlyPrice: '255', yearlyDiscount: 12, benefits: [t.proPages, t.advancedOcr, t.aiTranslationEdit, t.prioritySupport, t.customCertificates, t.auditTrail], isPopular: true, buttonText: t.getStarted, buttonVariant: 'primary' },
                 { id: 3, slug: 'business', name: 'Business', description: t.forLarge, monthlyPrice: '99', yearlyPrice: '871', yearlyDiscount: 12, benefits: [t.unlimitedPages, t.premiumOcr, t.aiTranslationEdit, t.teamWorkspace, t.dedicatedManager, t.apiAccess], isPopular: false, buttonText: t.contactTeam, buttonVariant: 'outline' },
-              ] as Plan[]).map((plan) => {
-                const price = isYearly ? Math.round(parseFloat(plan.yearlyPrice)) : Math.round(parseFloat(plan.monthlyPrice));
-                const isPopular = plan.isPopular;
-                const isPrimary = plan.buttonVariant === 'primary';
+              ] as Plan[];
+              const visiblePlans = allPlans.slice(planStartIndex, planStartIndex + 3);
+              const canGoLeft = planStartIndex > 0;
+              const canGoRight = planStartIndex + 3 < allPlans.length;
 
-                return (
-                  <div
-                    key={plan.id}
-                    className={`relative rounded-2xl ${
-                      isPopular ? 'border-2 border-purple-500' : 'border border-gray-200'
-                    } bg-white p-6 transition-all ${
-                      isPopular ? 'hover:shadow-xl' : 'hover:shadow-lg hover:border-gray-300'
-                    } flex flex-col h-full`}
-                  >
-                    {isPopular && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                        <span className="bg-purple-500 text-white text-xs font-medium px-3 py-1 rounded-full">
-                          {t.mostPopular}
-                        </span>
-                      </div>
-                    )}
-                    <div className="mb-6">
-                      <h3 className="text-xl font-semibold text-gray-900">{plan.name}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
-                    </div>
-                    <div className="flex items-baseline gap-2 mb-6">
-                      <span className="text-5xl font-bold text-gray-900">${price}</span>
-                      {price > 0 && (
-                        <>
-                          <span className="text-gray-500 text-lg">/{isYearly ? t.year : t.month}</span>
-                          {isYearly && plan.yearlyDiscount > 0 && (
-                            <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2 py-1 rounded-full">
-                              -{plan.yearlyDiscount}%
-                            </span>
+              return (
+                <div className="relative py-4">
+                  {/* Left Arrow */}
+                  {canGoLeft && (
+                    <button
+                      onClick={() => setPlanStartIndex(Math.max(0, planStartIndex - 1))}
+                      className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 bg-white border border-gray-200 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer"
+                    >
+                      <ChevronLeft className="w-5 h-5 text-gray-600" />
+                    </button>
+                  )}
+
+                  {/* Right Arrow */}
+                  {canGoRight && (
+                    <button
+                      onClick={() => setPlanStartIndex(Math.min(allPlans.length - 3, planStartIndex + 1))}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10 bg-white border border-gray-200 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer"
+                    >
+                      <ChevronRight className="w-5 h-5 text-gray-600" />
+                    </button>
+                  )}
+
+                  <div className="grid md:grid-cols-3 gap-6">
+                    {/* Dynamic Plans from Database */}
+                    {visiblePlans.map((plan) => {
+                      const price = isYearly ? Math.round(parseFloat(plan.yearlyPrice)) : Math.round(parseFloat(plan.monthlyPrice));
+                      const isPopular = plan.isPopular;
+                      const isPrimary = plan.buttonVariant === 'primary';
+
+                      return (
+                        <div
+                          key={plan.id}
+                          className={`relative rounded-2xl ${
+                            isPopular ? 'border-2 border-purple-500' : 'border border-gray-200'
+                          } bg-white p-6 transition-all ${
+                            isPopular ? 'hover:shadow-xl' : 'hover:shadow-lg hover:border-gray-300'
+                          } flex flex-col h-full`}
+                        >
+                          {isPopular && (
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                              <span className="bg-purple-500 text-white text-xs font-medium px-3 py-1 rounded-full">
+                                {t.mostPopular}
+                              </span>
+                            </div>
                           )}
-                        </>
-                      )}
-                    </div>
-                    <ul className="space-y-4 text-sm text-gray-600 flex-1">
-                      {plan.benefits.map((benefit, idx) => (
-                        <li key={idx} className="flex items-center gap-3">
-                          <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                          {benefit}
-                        </li>
-                      ))}
-                    </ul>
-                    <Link href="/sign-up" className="mt-8">
-                      <Button
-                        variant={isPrimary ? 'default' : 'outline'}
-                        className={`w-full h-11 rounded-lg ${
-                          isPrimary
-                            ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                            : 'border-gray-200'
-                        }`}
-                      >
-                        {plan.buttonText}
-                      </Button>
-                    </Link>
+                          <div className="mb-6">
+                            <h3 className="text-xl font-semibold text-gray-900">{plan.name}</h3>
+                            <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
+                          </div>
+                          <div className="flex items-baseline gap-2 mb-6">
+                            <span className="text-5xl font-bold text-gray-900">${price}</span>
+                            {price > 0 && (
+                              <>
+                                <span className="text-gray-500 text-lg">/{isYearly ? t.year : t.month}</span>
+                                {isYearly && plan.yearlyDiscount > 0 && (
+                                  <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2 py-1 rounded-full">
+                                    -{plan.yearlyDiscount}%
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                          <ul className="space-y-4 text-sm text-gray-600 flex-1">
+                            {plan.benefits.map((benefit, idx) => (
+                              <li key={idx} className="flex items-center gap-3">
+                                <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
+                                {benefit}
+                              </li>
+                            ))}
+                          </ul>
+                          <Link href="/sign-up" className="mt-8">
+                            <Button
+                              variant={isPrimary ? 'default' : 'outline'}
+                              className={`w-full h-11 rounded-lg ${
+                                isPrimary
+                                  ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                  : 'border-gray-200'
+                              }`}
+                            >
+                              {plan.buttonText}
+                            </Button>
+                          </Link>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+
+                  {/* Dots indicator */}
+                  {allPlans.length > 3 && (
+                    <div className="flex items-center justify-center gap-2 mt-6">
+                      {Array.from({ length: allPlans.length - 2 }).map((_, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setPlanStartIndex(idx)}
+                          className={`w-2 h-2 rounded-full transition-colors cursor-pointer ${
+                            planStartIndex === idx ? 'bg-purple-600' : 'bg-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </AnimationContainer>
 
           <AnimationContainer delay={0.3}>

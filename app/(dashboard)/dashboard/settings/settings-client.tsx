@@ -19,7 +19,7 @@ import {
   KeyRound,
   CheckCircle
 } from 'lucide-react';
-import { updateProfile, changePassword } from './actions';
+import { updateProfile, updateAccountName, changePassword } from './actions';
 
 interface SettingsClientProps {
   session: {
@@ -39,6 +39,7 @@ interface SettingsClientProps {
 export function SettingsClient({ session }: SettingsClientProps) {
   const [firstName, setFirstName] = useState(session.user.firstName || '');
   const [lastName, setLastName] = useState(session.user.lastName || '');
+  const [companyName, setCompanyName] = useState(session.accounts[0]?.name || '');
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -61,16 +62,30 @@ export function SettingsClient({ session }: SettingsClientProps) {
     setSaveSuccess(false);
 
     try {
-      const result = await updateProfile(firstName, lastName);
+      // Update profile (first name, last name)
+      const profileResult = await updateProfile(firstName, lastName);
 
-      if (result.status === 200) {
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
-        // Refresh page to update session
-        window.location.reload();
-      } else {
-        setSaveError(result.message || 'Failed to save changes');
+      if (profileResult.status !== 200) {
+        setSaveError(profileResult.message || 'Failed to save profile');
+        setSaving(false);
+        return;
       }
+
+      // Update account name (company name)
+      if (session.accounts[0]?.id) {
+        const accountResult = await updateAccountName(session.accounts[0].id, companyName);
+
+        if (accountResult.status !== 200) {
+          setSaveError(accountResult.message || 'Failed to save company name');
+          setSaving(false);
+          return;
+        }
+      }
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      // Refresh page to update session
+      window.location.reload();
     } catch (err) {
       console.error('Save error:', err);
       setSaveError('Connection error. Please try again.');
@@ -219,28 +234,13 @@ export function SettingsClient({ session }: SettingsClientProps) {
               </div>
               <h2 className="font-semibold text-gray-900">Account</h2>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-5">
               <div>
                 <label className="text-sm text-gray-700">Company Name</label>
                 <input
                   type="text"
-                  defaultValue={session.accounts[0]?.name || 'My Company'}
-                  className="mt-1.5 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-700">Business Address</label>
-                <input
-                  type="text"
-                  placeholder="123 Main St, City, State 12345"
-                  className="mt-1.5 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-700">Phone Number</label>
-                <input
-                  type="tel"
-                  placeholder="+1 (555) 123-4567"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
                   className="mt-1.5 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 />
               </div>
