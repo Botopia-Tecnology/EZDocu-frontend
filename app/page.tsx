@@ -496,11 +496,29 @@ function FaqItem({ question, answer, index }: { question: string; answer: string
   );
 }
 
+interface Plan {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  monthlyPrice: string;
+  yearlyPrice: string;
+  yearlyDiscount: number;
+  benefits: string[];
+  pagesPerMonth: number | null;
+  isPopular: boolean;
+  isActive: boolean;
+  sortOrder: number;
+  buttonText: string;
+  buttonVariant: string;
+}
+
 export default function Home() {
   const [isYearly, setIsYearly] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [lang, setLang] = useState<Lang>('en');
   const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [plans, setPlans] = useState<Plan[]>([]);
 
   useEffect(() => {
     // Detect browser language
@@ -513,6 +531,16 @@ export default function Home() {
     if (saved && ['en', 'es', 'pt'].includes(saved)) {
       setLang(saved);
     }
+
+    // Fetch plans from backend
+    fetch('/api/payments/plans')
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 200 && data.plans) {
+          setPlans(data.plans);
+        }
+      })
+      .catch(err => console.error('Error fetching plans:', err));
   }, []);
 
   const handleLangChange = (newLang: Lang) => {
@@ -523,9 +551,38 @@ export default function Home() {
 
   const t = translations[lang];
 
-  const prices = {
+  // Fallback prices if plans haven't loaded
+  const fallbackPrices = {
     pro: { monthly: 29, yearly: 255 },
     business: { monthly: 99, yearly: 871 }
+  };
+
+  const getPlanPrice = (slug: string, yearly: boolean) => {
+    const plan = plans.find(p => p.slug === slug);
+    if (plan) {
+      return yearly ? Math.round(parseFloat(plan.yearlyPrice)) : Math.round(parseFloat(plan.monthlyPrice));
+    }
+    if (slug === 'pro') return yearly ? fallbackPrices.pro.yearly : fallbackPrices.pro.monthly;
+    if (slug === 'business') return yearly ? fallbackPrices.business.yearly : fallbackPrices.business.monthly;
+    return 0;
+  };
+
+  const getPlanDiscount = (slug: string) => {
+    const plan = plans.find(p => p.slug === slug);
+    return plan?.yearlyDiscount || 12;
+  };
+
+  const getPlanBenefits = (slug: string) => {
+    const plan = plans.find(p => p.slug === slug);
+    return plan?.benefits || [];
+  };
+
+  const getPlanButton = (slug: string) => {
+    const plan = plans.find(p => p.slug === slug);
+    return {
+      text: plan?.buttonText || 'Get started',
+      variant: plan?.buttonVariant || 'default'
+    };
   };
 
   return (
@@ -1219,148 +1276,72 @@ export default function Home() {
 
           <AnimationContainer delay={0.2}>
             <div className="grid md:grid-cols-3 gap-6 py-4">
-              {/* Free Plan */}
-              <div className="relative rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:shadow-lg hover:border-gray-300 flex flex-col h-full">
-                <div className="mb-6">
-                  <h3 className="text-xl font-semibold text-gray-900">{t.free}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{t.forIndividuals}</p>
-                </div>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-5xl font-bold text-gray-900">$0</span>
-                </div>
-                <ul className="space-y-4 text-sm text-gray-600 flex-1">
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.pagesPerMonth}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.basicOcr}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.aiTranslation}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.communitySupport}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.basicCertificates}
-                  </li>
-                </ul>
-                <Link href="/sign-up" className="mt-8">
-                  <Button variant="outline" className="w-full h-11 rounded-lg border-gray-200">
-                    {t.startFree}
-                  </Button>
-                </Link>
-              </div>
+              {/* Dynamic Plans from Database */}
+              {(plans.length > 0 ? plans : [
+                { id: 1, slug: 'free', name: 'Free', description: t.forIndividuals, monthlyPrice: '0', yearlyPrice: '0', yearlyDiscount: 0, benefits: [t.pagesPerMonth, t.basicOcr, t.aiTranslation, t.communitySupport, t.basicCertificates], isPopular: false, buttonText: t.startFree, buttonVariant: 'outline' },
+                { id: 2, slug: 'pro', name: 'Pro', description: t.forSmall, monthlyPrice: '29', yearlyPrice: '255', yearlyDiscount: 12, benefits: [t.proPages, t.advancedOcr, t.aiTranslationEdit, t.prioritySupport, t.customCertificates, t.auditTrail], isPopular: true, buttonText: t.getStarted, buttonVariant: 'primary' },
+                { id: 3, slug: 'business', name: 'Business', description: t.forLarge, monthlyPrice: '99', yearlyPrice: '871', yearlyDiscount: 12, benefits: [t.unlimitedPages, t.premiumOcr, t.aiTranslationEdit, t.teamWorkspace, t.dedicatedManager, t.apiAccess], isPopular: false, buttonText: t.contactTeam, buttonVariant: 'outline' },
+              ] as Plan[]).map((plan) => {
+                const price = isYearly ? Math.round(parseFloat(plan.yearlyPrice)) : Math.round(parseFloat(plan.monthlyPrice));
+                const isPopular = plan.isPopular;
+                const isPrimary = plan.buttonVariant === 'primary';
 
-              {/* Pro Plan - Highlighted */}
-              <div className="relative rounded-2xl border-2 border-purple-500 bg-white p-6 transition-all hover:shadow-xl flex flex-col h-full">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="bg-purple-500 text-white text-xs font-medium px-3 py-1 rounded-full">
-                    {t.mostPopular}
-                  </span>
-                </div>
-                <div className="mb-6">
-                  <h3 className="text-xl font-semibold text-gray-900">{t.pro}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{t.forSmall}</p>
-                </div>
-                <div className="flex items-baseline gap-2 mb-6">
-                  <span className="text-5xl font-bold text-gray-900">
-                    ${isYearly ? prices.pro.yearly : prices.pro.monthly}
-                  </span>
-                  <span className="text-gray-500 text-lg">/{isYearly ? t.year : t.month}</span>
-                  {isYearly && (
-                    <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2 py-1 rounded-full">
-                      -12%
-                    </span>
-                  )}
-                </div>
-                <ul className="space-y-4 text-sm text-gray-600 flex-1">
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.proPages}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.advancedOcr}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.aiTranslationEdit}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.prioritySupport}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.customCertificates}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.auditTrail}
-                  </li>
-                </ul>
-                <Link href="/sign-up" className="mt-8">
-                  <Button className="w-full h-11 rounded-lg bg-purple-600 hover:bg-purple-700 text-white">
-                    {t.getStarted}
-                  </Button>
-                </Link>
-              </div>
-
-              {/* Business Plan */}
-              <div className="relative rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:shadow-lg hover:border-gray-300 flex flex-col h-full">
-                <div className="mb-6">
-                  <h3 className="text-xl font-semibold text-gray-900">{t.business}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{t.forLarge}</p>
-                </div>
-                <div className="flex items-baseline gap-2 mb-6">
-                  <span className="text-5xl font-bold text-gray-900">
-                    ${isYearly ? prices.business.yearly : prices.business.monthly}
-                  </span>
-                  <span className="text-gray-500 text-lg">/{isYearly ? t.year : t.month}</span>
-                  {isYearly && (
-                    <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2 py-1 rounded-full">
-                      -12%
-                    </span>
-                  )}
-                </div>
-                <ul className="space-y-4 text-sm text-gray-600 flex-1">
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.unlimitedPages}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.premiumOcr}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.aiTranslationEdit}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.teamWorkspace}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.dedicatedManager}
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                    {t.apiAccess}
-                  </li>
-                </ul>
-                <Link href="/sign-up" className="mt-8">
-                  <Button variant="outline" className="w-full h-11 rounded-lg border-gray-200">
-                    {t.contactTeam}
-                  </Button>
-                </Link>
-              </div>
+                return (
+                  <div
+                    key={plan.id}
+                    className={`relative rounded-2xl ${
+                      isPopular ? 'border-2 border-purple-500' : 'border border-gray-200'
+                    } bg-white p-6 transition-all ${
+                      isPopular ? 'hover:shadow-xl' : 'hover:shadow-lg hover:border-gray-300'
+                    } flex flex-col h-full`}
+                  >
+                    {isPopular && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span className="bg-purple-500 text-white text-xs font-medium px-3 py-1 rounded-full">
+                          {t.mostPopular}
+                        </span>
+                      </div>
+                    )}
+                    <div className="mb-6">
+                      <h3 className="text-xl font-semibold text-gray-900">{plan.name}</h3>
+                      <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
+                    </div>
+                    <div className="flex items-baseline gap-2 mb-6">
+                      <span className="text-5xl font-bold text-gray-900">${price}</span>
+                      {price > 0 && (
+                        <>
+                          <span className="text-gray-500 text-lg">/{isYearly ? t.year : t.month}</span>
+                          {isYearly && plan.yearlyDiscount > 0 && (
+                            <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2 py-1 rounded-full">
+                              -{plan.yearlyDiscount}%
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <ul className="space-y-4 text-sm text-gray-600 flex-1">
+                      {plan.benefits.map((benefit, idx) => (
+                        <li key={idx} className="flex items-center gap-3">
+                          <CheckCircle className="w-5 h-5 text-purple-500 flex-shrink-0" />
+                          {benefit}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link href="/sign-up" className="mt-8">
+                      <Button
+                        variant={isPrimary ? 'default' : 'outline'}
+                        className={`w-full h-11 rounded-lg ${
+                          isPrimary
+                            ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                            : 'border-gray-200'
+                        }`}
+                      >
+                        {plan.buttonText}
+                      </Button>
+                    </Link>
+                  </div>
+                );
+              })}
             </div>
           </AnimationContainer>
 
