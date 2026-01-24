@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { CreditCard, Plus, Clock, CheckCircle, Receipt, Zap, RefreshCw, Loader2, Crown } from 'lucide-react';
+import { CreditCard, Plus, Clock, CheckCircle, Receipt, Zap, Loader2, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AutoRechargeSettings } from './auto-recharge';
 
@@ -24,7 +23,6 @@ interface Plan {
 }
 
 export default function TranslatorCreditsPage() {
-  const router = useRouter();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [isLoadingPlans, setIsLoadingPlans] = useState(true);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
@@ -113,6 +111,127 @@ export default function TranslatorCreditsPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Subscription Plans */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Crown className="h-5 w-5 text-purple-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Subscription Plans</h2>
+          </div>
+          {/* Billing Toggle */}
+          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setBillingPeriod('monthly')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                billingPeriod === 'monthly'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingPeriod('yearly')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                billingPeriod === 'yearly'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Yearly
+              <span className="ml-1 text-xs text-purple-600 font-semibold">Save up to 20%</span>
+            </button>
+          </div>
+        </div>
+
+        {isLoadingPlans ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 text-purple-600 animate-spin" />
+          </div>
+        ) : plans.length === 0 ? (
+          <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-xl border border-gray-200">
+            <Crown className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+            <p>No subscription plans available</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {plans.map((plan) => {
+              const isPopular = plan.isPopular;
+              const isPrimary = plan.buttonVariant === 'primary';
+              const yearlyPrice = Math.round(parseFloat(plan.yearlyPrice));
+              const monthlyPrice = Math.round(parseFloat(plan.monthlyPrice));
+              const isYearly = billingPeriod === 'yearly';
+              const displayPrice = isYearly ? yearlyPrice : monthlyPrice;
+
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative rounded-2xl ${
+                    isPopular ? 'border-2 border-purple-500 shadow-lg shadow-purple-500/10' : 'border border-gray-200'
+                  } bg-white p-6 transition-all hover:shadow-xl flex flex-col h-full`}
+                >
+                  {isPopular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <span className="bg-purple-500 text-white text-xs font-medium px-3 py-1 rounded-full">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
+                  <div className="mb-4 mt-1">
+                    <h3 className="text-xl font-semibold text-gray-900">{plan.name}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
+                  </div>
+                  <div className="flex items-baseline gap-2 mb-2">
+                    <span className="text-4xl font-bold text-gray-900">${displayPrice}</span>
+                    {displayPrice > 0 && (
+                      <>
+                        <span className="text-gray-500 text-sm">/{isYearly ? 'year' : 'month'}</span>
+                        {isYearly && plan.yearlyDiscount > 0 && (
+                          <span className="bg-purple-100 text-purple-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                            -{plan.yearlyDiscount}%
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  {displayPrice > 0 && isYearly && (
+                    <p className="text-xs text-gray-500 mb-4">
+                      or ${monthlyPrice}/month billed monthly
+                    </p>
+                  )}
+                  {displayPrice > 0 && !isYearly && (
+                    <p className="text-xs text-gray-500 mb-4">
+                      or ${yearlyPrice}/year (save {plan.yearlyDiscount}%)
+                    </p>
+                  )}
+                  {displayPrice === 0 && <div className="mb-4" />}
+                  <ul className="space-y-2 text-sm text-gray-600 flex-1 mb-6">
+                    {plan.benefits.map((benefit, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-auto">
+                    <Button
+                      className={`w-full h-11 rounded-lg text-sm font-medium ${
+                        isPrimary
+                          ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                          : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                      variant={isPrimary ? 'default' : 'outline'}
+                    >
+                      {plan.buttonText}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Pricing Info - CORRECTED per scope: image=1, text=2 */}
