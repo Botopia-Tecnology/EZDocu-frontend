@@ -1,12 +1,33 @@
-import { getSession } from '@/lib/auth/session';
-import { redirect } from 'next/navigation';
-import { CreditCard, Plus, Clock, CheckCircle, Receipt, Zap, RefreshCw } from 'lucide-react';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { CreditCard, Plus, Clock, CheckCircle, Receipt, Zap, RefreshCw, Loader2, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AutoRechargeSettings } from './auto-recharge';
 
-export default async function TranslatorCreditsPage() {
-  const session = await getSession();
-  if (!session) redirect('/sign-in');
+interface Plan {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  monthlyPrice: string;
+  yearlyPrice: string;
+  yearlyDiscount: number;
+  benefits: string[];
+  pagesPerMonth: number | null;
+  isPopular: boolean;
+  isActive: boolean;
+  sortOrder: number;
+  buttonText: string;
+  buttonVariant: string;
+}
+
+export default function TranslatorCreditsPage() {
+  const router = useRouter();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(true);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('yearly');
 
   const creditBalance = 1250;
   const usedThisMonth = 350;
@@ -26,6 +47,26 @@ export default async function TranslatorCreditsPage() {
     { id: 4, type: 'usage', credits: -6, description: 'Order ORD-006 (3 pages, text)', date: '2024-01-13' },
     { id: 5, type: 'purchase', credits: 1000, date: '2023-12-20' },
   ];
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        setIsLoadingPlans(true);
+        const response = await fetch('/api/payments/plans');
+        const data = await response.json();
+        if (data.status === 200 && data.plans) {
+          // Only show active plans
+          setPlans(data.plans.filter((p: Plan) => p.isActive));
+        }
+      } catch (error) {
+        console.error('Error fetching plans:', error);
+      } finally {
+        setIsLoadingPlans(false);
+      }
+    };
+
+    fetchPlans();
+  }, []);
 
   return (
     <div className="space-y-6">
