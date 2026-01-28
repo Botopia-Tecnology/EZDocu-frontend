@@ -17,7 +17,9 @@ import {
   Languages,
   FileType,
   Info,
-  ScanLine
+  ScanLine,
+  UserPlus,
+  Users
 } from 'lucide-react';
 import Link from 'next/link';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
@@ -64,6 +66,15 @@ interface AnalysisResult {
   accountCredits: number;
   hasEnoughCredits: boolean;
   creditShortfall: number;
+}
+
+interface TeamMember {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  isActive: boolean;
 }
 
 const LANGUAGES = [
@@ -181,18 +192,42 @@ function PdfPreview({ file }: { file: File }) {
 }
 
 // Large PDF Preview Component for the document viewer with page navigation
-function LargePdfPreview({ file, totalPages, onPageChange }: { file: File; totalPages?: number; onPageChange?: (page: number) => void }) {
+// Now accepts optional pdfDoc to avoid reloading
+function LargePdfPreview({
+  file,
+  totalPages,
+  onPageChange,
+  pdfDoc,
+  onPdfLoaded
+}: {
+  file: File;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  pdfDoc?: PDFDocumentProxy | null;
+  onPdfLoaded?: (pdf: PDFDocumentProxy) => void;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isRendering, setIsRendering] = useState(true);
   const [error, setError] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [numPages, setNumPages] = useState(totalPages || 1);
-  const [pdfLoaded, setPdfLoaded] = useState(false);
-  const pdfDocRef = useRef<PDFDocumentProxy | null>(null);
+  const [pdfLoaded, setPdfLoaded] = useState(!!pdfDoc);
+  const pdfDocRef = useRef<PDFDocumentProxy | null>(pdfDoc || null);
 
-  // Load PDF document once
+  // Use provided pdfDoc if available
   useEffect(() => {
+    if (pdfDoc) {
+      pdfDocRef.current = pdfDoc;
+      setNumPages(pdfDoc.numPages);
+      setPdfLoaded(true);
+    }
+  }, [pdfDoc]);
+
+  // Load PDF document once (only if not provided)
+  useEffect(() => {
+    if (pdfDoc) return; // Skip loading if already provided
+
     let cancelled = false;
 
     const loadPdf = async () => {
@@ -207,6 +242,9 @@ function LargePdfPreview({ file, totalPages, onPageChange }: { file: File; total
         pdfDocRef.current = pdf;
         setNumPages(pdf.numPages);
         setPdfLoaded(true);
+
+        // Notify parent about loaded PDF for caching
+        onPdfLoaded?.(pdf);
       } catch (err) {
         console.error('PDF load error:', err);
         if (!cancelled) {
@@ -220,7 +258,7 @@ function LargePdfPreview({ file, totalPages, onPageChange }: { file: File; total
     return () => {
       cancelled = true;
     };
-  }, [file]);
+  }, [file, pdfDoc, onPdfLoaded]);
 
   // Render current page when PDF is loaded or page changes
   useEffect(() => {
@@ -384,6 +422,14 @@ export default function NewOrderPage() {
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Cached PDF document to avoid reloading between steps
+  const [cachedPdfDoc, setCachedPdfDoc] = useState<PDFDocumentProxy | null>(null);
+
+  // Callback to cache the loaded PDF
+  const handlePdfLoaded = useCallback((pdf: PDFDocumentProxy) => {
+    setCachedPdfDoc(pdf);
+  }, []);
+
   // Form state
   const [documentName, setDocumentName] = useState('');
   const [documentCategory, setDocumentCategory] = useState<DocumentCategory>('other');
@@ -394,6 +440,45 @@ export default function NewOrderPage() {
 
   // Analysis state
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+
+  // Team assignment state (only for team role)
+  const [userType, setUserType] = useState<string>('user');
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [assignedTo, setAssignedTo] = useState<string>(''); // userId to assign the order to
+  const [isLoadingTeam, setIsLoadingTeam] = useState(false);
+
+  // Fetch team members if user has team role
+  useEffect(() => {
+    const fetchTeamData = async () => {
+      try {
+        // First get user type from session
+        const sessionResponse = await fetch('/api/auth/session');
+        const sessionData = await sessionResponse.json();
+
+        if (sessionData?.userType) {
+          setUserType(sessionData.userType);
+
+          // Only fetch team members if user has team role
+          if (sessionData.userType === 'team') {
+            setIsLoadingTeam(true);
+            const teamResponse = await fetch('/api/auth/team');
+            const teamData = await teamResponse.json();
+
+            if (teamData?.members) {
+              // Filter only active members
+              setTeamMembers(teamData.members.filter((m: TeamMember) => m.isActive));
+            }
+            setIsLoadingTeam(false);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching team data:', err);
+        setIsLoadingTeam(false);
+      }
+    };
+
+    fetchTeamData();
+  }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -618,6 +703,7 @@ export default function NewOrderPage() {
     }
     setFileInfo(null);
     setAnalysis(null);
+    setCachedPdfDoc(null); // Clear cached PDF
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -699,6 +785,7 @@ export default function NewOrderPage() {
           documentCategory,
           sourceLanguage,
           targetLanguage,
+          ...(assignedTo && { assignedTo }), // Include assignedTo if set (team role only)
         }),
       });
 
@@ -720,7 +807,7 @@ export default function NewOrderPage() {
   const creditsRequired = totalPages * (isImageBased ? 1 : 2);
 
   return (
-    <div className={`mx-auto transition-all ${step === 'upload' && fileInfo ? 'max-w-7xl' : 'max-w-3xl'}`}>
+    <div className={`mx-auto transition-all ${(step === 'upload' || step === 'details') && fileInfo ? 'max-w-[1600px] px-4' : 'max-w-3xl'}`}>
       {/* Header */}
       <div className="mb-4">
         <Link href="/dashboard/orders" className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 mb-2">
@@ -753,9 +840,9 @@ export default function NewOrderPage() {
 
       {/* Step 1: Upload */}
       {step === 'upload' && (
-        <div className={fileInfo ? 'grid grid-cols-5 gap-6' : ''}>
+        <div className={fileInfo ? 'grid grid-cols-2 gap-4' : ''}>
           {/* Left side - Upload area / File info */}
-          <div className="col-span-2 bg-white rounded-xl border border-gray-200 p-6">
+          <div className={`bg-white rounded-xl border border-gray-200 p-4 ${fileInfo ? 'flex flex-col overflow-y-auto' : ''}`} style={fileInfo ? { height: 'calc(100vh - 160px)', maxHeight: '850px' } : undefined}>
             <h2 className="text-lg font-medium text-gray-900 mb-4">Upload Document</h2>
 
             {!fileInfo ? (
@@ -906,6 +993,46 @@ export default function NewOrderPage() {
                   </div>
                 </div>
 
+                {/* Team Assignment - Only visible for team role */}
+                {userType === 'team' && !fileInfo.isAnalyzing && (
+                  <div className="border border-gray-200 rounded-xl p-4 bg-gray-50">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Users className="h-4 w-4 text-gray-600" />
+                      <span className="text-sm font-medium text-gray-700">Assign to Team Member</span>
+                      <span className="text-xs text-gray-500 ml-1">(Optional)</span>
+                    </div>
+
+                    {isLoadingTeam ? (
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading team members...
+                      </div>
+                    ) : teamMembers.length === 0 ? (
+                      <p className="text-sm text-gray-500">No team members available</p>
+                    ) : (
+                      <select
+                        value={assignedTo}
+                        onChange={(e) => setAssignedTo(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                      >
+                        <option value="">Not assigned (I will handle it)</option>
+                        {teamMembers.map((member) => (
+                          <option key={member.id} value={member.id}>
+                            {member.firstName} {member.lastName} ({member.email})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {assignedTo && (
+                      <p className="text-xs text-purple-600 mt-2 flex items-center gap-1">
+                        <UserPlus className="h-3 w-3" />
+                        This order will be assigned to the selected team member
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {!fileInfo.isAnalyzing && (
                   <div className="flex justify-end">
                     <Button onClick={() => setStep('details')} className="bg-purple-600 hover:bg-purple-700 text-white">
@@ -920,7 +1047,7 @@ export default function NewOrderPage() {
 
           {/* Right side - Document Preview Viewer */}
           {fileInfo && (
-            <div className="col-span-3 bg-white rounded-xl border border-gray-200 p-4 flex flex-col" style={{ height: 'calc(100vh - 160px)', maxHeight: '850px' }}>
+            <div className="bg-white rounded-xl border border-gray-200 p-3 flex flex-col" style={{ height: 'calc(100vh - 160px)', maxHeight: '850px' }}>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-medium text-gray-700">Document Preview</h3>
                 {fileInfo.detectedType !== 'pdf' && (
@@ -942,7 +1069,12 @@ export default function NewOrderPage() {
                     className="max-w-full max-h-full object-contain"
                   />
                 ) : fileInfo.detectedType === 'pdf' ? (
-                  <LargePdfPreview file={fileInfo.file} totalPages={fileInfo.detectedPages} />
+                  <LargePdfPreview
+                    file={fileInfo.file}
+                    totalPages={fileInfo.detectedPages}
+                    pdfDoc={cachedPdfDoc}
+                    onPdfLoaded={handlePdfLoaded}
+                  />
                 ) : fileInfo.detectedType === 'word' ? (
                   <div className="text-center p-8">
                     <div className="w-24 h-24 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -971,33 +1103,35 @@ export default function NewOrderPage() {
 
       {/* Step 2: Details */}
       {step === 'details' && fileInfo && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-6">Document Details</h2>
+        <div className="grid grid-cols-2 gap-4">
+          {/* Left side - Form */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col overflow-y-auto" style={{ height: 'calc(100vh - 160px)', maxHeight: '850px' }}>
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Document Details</h2>
 
-          <div className="space-y-6">
+          <div className="space-y-3">
             {/* Document Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Document Name
               </label>
               <input
                 type="text"
                 value={documentName}
                 onChange={(e) => setDocumentName(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                 placeholder="e.g., Birth Certificate - Garcia"
               />
             </div>
 
             {/* Document Category */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Document Category
               </label>
               <select
                 value={documentCategory}
                 onChange={(e) => setDocumentCategory(e.target.value as DocumentCategory)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
                 {DOCUMENT_CATEGORIES.map((cat) => (
                   <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -1006,16 +1140,16 @@ export default function NewOrderPage() {
             </div>
 
             {/* Languages */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   <Languages className="h-4 w-4 inline mr-1" />
                   Source Language
                 </label>
                 <select
                   value={sourceLanguage}
                   onChange={(e) => setSourceLanguage(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
                   {LANGUAGES.map((lang) => (
                     <option key={lang.code} value={lang.code}>{lang.name}</option>
@@ -1023,14 +1157,14 @@ export default function NewOrderPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   <Languages className="h-4 w-4 inline mr-1" />
                   Target Language
                 </label>
                 <select
                   value={targetLanguage}
                   onChange={(e) => setTargetLanguage(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
                   {LANGUAGES.map((lang) => (
                     <option key={lang.code} value={lang.code}>{lang.name}</option>
@@ -1041,7 +1175,7 @@ export default function NewOrderPage() {
 
             {/* File Type Detected */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 <FileType className="h-4 w-4 inline mr-1" />
                 File Analysis
                 {fileInfo.isAnalyzing ? (
@@ -1053,7 +1187,7 @@ export default function NewOrderPage() {
                   <span className="text-xs font-normal text-green-600 ml-2">Auto-detected</span>
                 )}
               </label>
-              <div className="p-4 border border-gray-200 rounded-xl bg-gray-50 space-y-3">
+              <div className="p-3 border border-gray-200 rounded-lg bg-gray-50 space-y-2">
                 {/* File Type */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -1096,25 +1230,25 @@ export default function NewOrderPage() {
 
                 {/* Show sample text if detected */}
                 {fileInfo.textContent && fileInfo.hasSelectableText && (
-                  <div className="bg-white border border-gray-200 rounded-lg p-3">
-                    <p className="text-xs text-gray-500 mb-1">Sample extracted text:</p>
+                  <div className="bg-white border border-gray-200 rounded p-2">
+                    <p className="text-xs text-gray-500 mb-0.5">Sample extracted text:</p>
                     <p className="text-xs text-gray-700 italic line-clamp-2">"{fileInfo.textContent}..."</p>
                   </div>
                 )}
 
                 {/* Document Processing Type */}
-                <div className="pt-3 border-t border-gray-200">
+                <div className="pt-2 border-t border-gray-200">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-purple-100">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-purple-100">
                         {isImageBased ? (
-                          <ScanLine className="h-5 w-5 text-purple-600" />
+                          <ScanLine className="h-4 w-4 text-purple-600" />
                         ) : (
-                          <FileText className="h-5 w-5 text-purple-600" />
+                          <FileText className="h-4 w-4 text-purple-600" />
                         )}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="text-sm font-medium text-gray-900">
                           {isImageBased ? 'Image-based (OCR)' : 'Text-based (Direct)'}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -1138,7 +1272,7 @@ export default function NewOrderPage() {
 
             {/* Number of Pages */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Number of Pages
               </label>
               <input
@@ -1147,15 +1281,15 @@ export default function NewOrderPage() {
                 max="500"
                 value={totalPages}
                 onChange={(e) => setTotalPages(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-32 px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-28 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>
 
             {/* Credit Estimate */}
-            <div className="bg-gray-50 rounded-xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <CreditCard className="h-5 w-5 text-purple-600" />
+            <div className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <CreditCard className="h-4 w-4 text-purple-600" />
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">Estimated Credits</p>
@@ -1164,11 +1298,11 @@ export default function NewOrderPage() {
                   </p>
                 </div>
               </div>
-              <p className="text-2xl font-semibold text-purple-600">{creditsRequired}</p>
+              <p className="text-xl font-semibold text-purple-600">{creditsRequired}</p>
             </div>
           </div>
 
-          <div className="mt-6 flex justify-between">
+          <div className="mt-4 flex justify-between">
             <Button variant="outline" onClick={() => setStep('upload')}>
               <ArrowLeft className="h-4 w-4 mr-1" />
               Back
@@ -1190,6 +1324,59 @@ export default function NewOrderPage() {
                 </>
               )}
             </Button>
+          </div>
+        </div>
+
+          {/* Right side - Document Preview */}
+          <div className="bg-white rounded-xl border border-gray-200 p-3 flex flex-col" style={{ height: 'calc(100vh - 160px)', maxHeight: '850px' }}>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-gray-700">Document Preview</h3>
+              {fileInfo.detectedType !== 'pdf' && (
+                <span className="text-xs text-gray-500">Page 1{fileInfo.detectedPages && fileInfo.detectedPages > 1 ? ` of ${fileInfo.detectedPages}` : ''}</span>
+              )}
+            </div>
+
+            {/* Large Preview Container */}
+            <div className="bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-y-auto flex-1">
+              {fileInfo.isAnalyzing ? (
+                <div className="text-center">
+                  <Loader2 className="h-12 w-12 text-gray-400 animate-spin mx-auto" />
+                  <p className="text-sm text-gray-500 mt-3">Loading preview...</p>
+                </div>
+              ) : fileInfo.detectedType === 'image' && fileInfo.preview ? (
+                <img
+                  src={fileInfo.preview}
+                  alt="Document Preview"
+                  className="max-w-full max-h-full object-contain"
+                />
+              ) : fileInfo.detectedType === 'pdf' ? (
+                <LargePdfPreview
+                  file={fileInfo.file}
+                  totalPages={fileInfo.detectedPages}
+                  pdfDoc={cachedPdfDoc}
+                  onPdfLoaded={handlePdfLoaded}
+                />
+              ) : fileInfo.detectedType === 'word' ? (
+                <div className="text-center p-8">
+                  <div className="w-24 h-24 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <FileText className="h-12 w-12 text-purple-600" />
+                  </div>
+                  <p className="text-lg font-medium text-gray-700">Word Document</p>
+                  <p className="text-sm text-gray-500 mt-1">{fileInfo.name}</p>
+                  {fileInfo.textContent && (
+                    <div className="mt-4 bg-white rounded-lg p-4 text-left max-w-md mx-auto border border-gray-200">
+                      <p className="text-xs text-gray-500 mb-2">Content preview:</p>
+                      <p className="text-sm text-gray-700 line-clamp-4">{fileInfo.textContent}...</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center">
+                  <FileText className="h-16 w-16 text-gray-300 mx-auto" />
+                  <p className="text-sm text-gray-500 mt-3">No preview available</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

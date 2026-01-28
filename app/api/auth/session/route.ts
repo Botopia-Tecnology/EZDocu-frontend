@@ -1,5 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { setSession, clearSession, UserType, AccountInfo, SessionUser } from '@/lib/auth/session';
+import { setSession, clearSession, getSession, UserType, AccountInfo, SessionUser } from '@/lib/auth/session';
+
+export async function GET() {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+    return NextResponse.json({
+      userType: session.userType,
+      user: session.user,
+      activeAccountId: session.activeAccountId,
+    });
+  } catch (error) {
+    console.error('Session retrieval error:', error);
+    return NextResponse.json({ error: 'Failed to get session' }, { status: 500 });
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
