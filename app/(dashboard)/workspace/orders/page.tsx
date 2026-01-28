@@ -44,15 +44,15 @@ export default async function MemberOrdersPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">My Orders</h1>
-        <p className="text-gray-500 mt-1">All orders assigned to you</p>
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">My Orders</h1>
+        <p className="text-gray-500 mt-1 text-sm sm:text-base">All orders assigned to you</p>
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
@@ -61,43 +61,45 @@ export default async function MemberOrdersPage() {
             className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
           />
         </div>
-        <select className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-900">
-          <option>All Status</option>
-          <option>Ready for OCR</option>
-          <option>OCR Review</option>
-          <option>Translating</option>
-          <option>Completed</option>
-        </select>
-        <select className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-900">
-          <option>All Priority</option>
-          <option>High</option>
-          <option>Normal</option>
-          <option>Low</option>
-        </select>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <select className="flex-1 sm:flex-none px-3 sm:px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-900">
+            <option>All Status</option>
+            <option>Ready for OCR</option>
+            <option>OCR Review</option>
+            <option>Translating</option>
+            <option>Completed</option>
+          </select>
+          <select className="flex-1 sm:flex-none px-3 sm:px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-900">
+            <option>All Priority</option>
+            <option>High</option>
+            <option>Normal</option>
+            <option>Low</option>
+          </select>
+        </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Total Assigned</p>
-          <p className="text-2xl font-semibold text-gray-900 mt-1">8</p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-gray-500">Total Assigned</p>
+          <p className="text-xl sm:text-2xl font-semibold text-gray-900 mt-1">8</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">In Progress</p>
-          <p className="text-2xl font-semibold text-blue-600 mt-1">5</p>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-gray-500">In Progress</p>
+          <p className="text-xl sm:text-2xl font-semibold text-blue-600 mt-1">5</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Completed</p>
-          <p className="text-2xl font-semibold text-green-600 mt-1">3</p>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-gray-500">Completed</p>
+          <p className="text-xl sm:text-2xl font-semibold text-green-600 mt-1">3</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">High Priority</p>
-          <p className="text-2xl font-semibold text-red-600 mt-1">2</p>
+        <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
+          <p className="text-xs sm:text-sm text-gray-500">High Priority</p>
+          <p className="text-xl sm:text-2xl font-semibold text-red-600 mt-1">2</p>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden lg:block bg-white rounded-xl border border-gray-200 overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50">
@@ -175,6 +177,71 @@ export default async function MemberOrdersPage() {
             </Button>
             <Button variant="outline" size="sm" className="h-8 w-8 bg-purple-600 text-white border-purple-600">1</Button>
             <Button variant="outline" size="sm" className="h-8" disabled>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="lg:hidden space-y-3">
+        {orders.map((order) => {
+          const status = statusConfig[order.status];
+          const priority = priorityConfig[order.priority];
+          return (
+            <div key={order.id} className="bg-white rounded-xl border border-gray-200 p-4">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FileText className="h-4 w-4 text-gray-500" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{order.name}</p>
+                      <p className="text-xs text-gray-500 font-mono">{order.id}</p>
+                    </div>
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${status.bg} ${status.color}`}>
+                      {status.label}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-xs mb-3">
+                <div className="flex items-center gap-2">
+                  <span className={`font-medium px-1.5 py-0.5 rounded capitalize ${priority.bg} ${priority.color}`}>
+                    {order.priority}
+                  </span>
+                  <span className="text-gray-500">{order.pages} pages</span>
+                </div>
+                <div className="flex items-center gap-1 text-gray-500">
+                  <Clock className="h-3 w-3" />
+                  {order.assignedAt}
+                </div>
+              </div>
+              <Link href={`/workspace/orders/${order.id}`}>
+                <Button
+                  size="sm"
+                  className={`w-full text-xs ${order.status === 'completed'
+                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-purple-600 hover:bg-purple-700 text-white'
+                  }`}
+                >
+                  <Play className="h-3 w-3 mr-1.5" />
+                  {status.action}
+                </Button>
+              </Link>
+            </div>
+          );
+        })}
+        {/* Mobile Pagination */}
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-xs text-gray-500">1-8 of 8</p>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0 bg-purple-600 text-white border-purple-600">1</Button>
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

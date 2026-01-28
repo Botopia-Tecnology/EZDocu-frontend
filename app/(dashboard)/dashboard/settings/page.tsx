@@ -20,6 +20,7 @@ export default async function SettingsPage() {
     accounts: session.accounts.map(acc => ({
       id: acc.id,
       name: acc.name,
+      logoUrl: acc.logoUrl,
     })),
   };
 

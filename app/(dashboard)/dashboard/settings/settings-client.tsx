@@ -19,7 +19,7 @@ import {
   KeyRound,
   CheckCircle
 } from 'lucide-react';
-import { updateProfile, updateAccountName, changePassword } from './actions';
+import { updateProfile, updateAccountName, changePassword, updateAccountLogo } from './actions';
 
 interface SettingsClientProps {
   session: {
@@ -32,6 +32,7 @@ interface SettingsClientProps {
     accounts: Array<{
       id: string;
       name: string;
+      logoUrl?: string;
     }>;
   };
 }
@@ -44,6 +45,10 @@ export function SettingsClient({ session }: SettingsClientProps) {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState('');
 
+  // Logo upload state
+  const [logoUrl, setLogoUrl] = useState(session.accounts[0]?.logoUrl || '');
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
   // Change Password Modal State
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
@@ -55,6 +60,75 @@ export function SettingsClient({ session }: SettingsClientProps) {
   const [passwordPending, setPasswordPending] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  // Convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  // Handle logo file selection
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setSaveError('Logo must be less than 5MB');
+      return;
+    }
+
+    setUploadingLogo(true);
+    setSaveError('');
+
+    try {
+      // Convert file to base64
+      const imageData = await fileToBase64(file);
+
+      // Send to backend (which uploads to Cloudinary)
+      if (session.accounts[0]?.id) {
+        const result = await updateAccountLogo(session.accounts[0].id, imageData);
+        if (result.status === 200) {
+          setLogoUrl(result.account?.logoUrl || '');
+          // Reload to update sidebar
+          window.location.reload();
+        } else {
+          setSaveError(result.message || 'Failed to save logo');
+        }
+      }
+    } catch (error) {
+      console.error('Logo upload error:', error);
+      setSaveError('Failed to upload logo');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
+  // Handle logo removal
+  const handleRemoveLogo = async () => {
+    if (!session.accounts[0]?.id) return;
+
+    setUploadingLogo(true);
+    setSaveError('');
+
+    try {
+      const result = await updateAccountLogo(session.accounts[0].id, '');
+      if (result.status === 200) {
+        setLogoUrl('');
+        window.location.reload();
+      } else {
+        setSaveError(result.message || 'Failed to remove logo');
+      }
+    } catch (error) {
+      console.error('Logo remove error:', error);
+      setSaveError('Failed to remove logo');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const handleSaveChanges = async () => {
     setSaving(true);
@@ -136,15 +210,15 @@ export function SettingsClient({ session }: SettingsClientProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
-          <p className="text-gray-500 mt-1">Manage your account and preferences</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Settings</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Manage your account and preferences</p>
         </div>
         <Button
-          className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
+          className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg w-full sm:w-auto"
           onClick={handleSaveChanges}
           disabled={saving}
         >
@@ -168,35 +242,26 @@ export function SettingsClient({ session }: SettingsClientProps) {
       </div>
 
       {saveError && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+        <div className="bg-red-50 border border-red-200 text-red-600 px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg text-sm">
           {saveError}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Main Settings */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Profile */}
           <div className="bg-white rounded-xl border border-gray-200">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                <User className="h-4 w-4 text-gray-600" />
+            <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 flex items-center gap-2 sm:gap-3">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-600" />
               </div>
-              <h2 className="font-semibold text-gray-900">Profile</h2>
+              <h2 className="font-semibold text-gray-900 text-sm sm:text-base">Profile</h2>
             </div>
-            <div className="p-5 space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-gray-700 to-gray-900 rounded-full flex items-center justify-center text-white text-xl font-semibold">
-                  {firstName?.[0]}{lastName?.[0]}
-                </div>
-                <Button variant="outline" size="sm">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Photo
-                </Button>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 sm:p-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
-                  <label className="text-sm text-gray-700">First Name</label>
+                  <label className="text-xs sm:text-sm text-gray-700">First Name</label>
                   <input
                     type="text"
                     value={firstName}
@@ -205,7 +270,7 @@ export function SettingsClient({ session }: SettingsClientProps) {
                   />
                 </div>
                 <div>
-                  <label className="text-sm text-gray-700">Last Name</label>
+                  <label className="text-xs sm:text-sm text-gray-700">Last Name</label>
                   <input
                     type="text"
                     value={lastName}
@@ -215,7 +280,7 @@ export function SettingsClient({ session }: SettingsClientProps) {
                 </div>
               </div>
               <div>
-                <label className="text-sm text-gray-700">Email</label>
+                <label className="text-xs sm:text-sm text-gray-700">Email</label>
                 <input
                   type="email"
                   defaultValue={session.user.email}
@@ -228,15 +293,76 @@ export function SettingsClient({ session }: SettingsClientProps) {
 
           {/* Account */}
           <div className="bg-white rounded-xl border border-gray-200">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Building2 className="h-4 w-4 text-gray-600" />
+            <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 flex items-center gap-2 sm:gap-3">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-600" />
               </div>
-              <h2 className="font-semibold text-gray-900">Account</h2>
+              <h2 className="font-semibold text-gray-900 text-sm sm:text-base">Account</h2>
             </div>
-            <div className="p-5">
+            <div className="p-4 sm:p-5 space-y-4">
+              {/* Company Logo */}
+              <div className="flex items-center gap-3 sm:gap-4">
+                {logoUrl ? (
+                  <img
+                    src={logoUrl}
+                    alt={session.accounts[0]?.name || 'Company'}
+                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover flex-shrink-0 border border-gray-200"
+                  />
+                ) : (
+                  <img
+                    src="/logo.png"
+                    alt="EZDocu"
+                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-contain flex-shrink-0"
+                  />
+                )}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="hidden"
+                      disabled={uploadingLogo}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs sm:text-sm pointer-events-none"
+                      disabled={uploadingLogo}
+                      asChild
+                    >
+                      <span>
+                        {uploadingLogo ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                            {logoUrl ? 'Change Logo' : 'Upload Logo'}
+                          </>
+                        )}
+                      </span>
+                    </Button>
+                  </label>
+                  {logoUrl && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs sm:text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={handleRemoveLogo}
+                      disabled={uploadingLogo}
+                    >
+                      <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              </div>
+              {/* Company Name */}
               <div>
-                <label className="text-sm text-gray-700">Company Name</label>
+                <label className="text-xs sm:text-sm text-gray-700">Company Name</label>
                 <input
                   type="text"
                   value={companyName}
@@ -249,32 +375,32 @@ export function SettingsClient({ session }: SettingsClientProps) {
 
           {/* Notifications */}
           <div className="bg-white rounded-xl border border-gray-200">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Bell className="h-4 w-4 text-gray-600" />
+            <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 flex items-center gap-2 sm:gap-3">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-600" />
               </div>
-              <h2 className="font-semibold text-gray-900">Notifications</h2>
+              <h2 className="font-semibold text-gray-900 text-sm sm:text-base">Notifications</h2>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-4 sm:p-5 space-y-3 sm:space-y-4">
               {[
                 { label: 'Order status updates', description: 'Get notified when order status changes', enabled: true },
                 { label: 'Team activity', description: 'Notifications about team member actions', enabled: true },
                 { label: 'Low credit alerts', description: 'Alert when credits fall below 50', enabled: true },
                 { label: 'Marketing emails', description: 'Tips, product updates, and offers', enabled: false },
               ].map((item, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{item.label}</p>
-                    <p className="text-xs text-gray-500">{item.description}</p>
+                <div key={i} className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-gray-900">{item.label}</p>
+                    <p className="text-[10px] sm:text-xs text-gray-500">{item.description}</p>
                   </div>
                   <button
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    className={`relative inline-flex h-5 w-9 sm:h-6 sm:w-11 items-center rounded-full transition-colors flex-shrink-0 ${
                       item.enabled ? 'bg-purple-600' : 'bg-gray-200'
                     }`}
                   >
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm ${
-                        item.enabled ? 'translate-x-6' : 'translate-x-1'
+                      className={`inline-block h-3.5 w-3.5 sm:h-4 sm:w-4 transform rounded-full bg-white transition-transform shadow-sm ${
+                        item.enabled ? 'translate-x-4 sm:translate-x-6' : 'translate-x-1'
                       }`}
                     />
                   </button>
@@ -285,18 +411,18 @@ export function SettingsClient({ session }: SettingsClientProps) {
         </div>
 
         {/* Side Panel */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Translator Certification */}
           <div className="bg-white rounded-xl border border-gray-200">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Globe className="h-4 w-4 text-gray-600" />
+            <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 flex items-center gap-2 sm:gap-3">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-600" />
               </div>
-              <h2 className="font-semibold text-gray-900">Certification</h2>
+              <h2 className="font-semibold text-gray-900 text-sm sm:text-base">Certification</h2>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-4 sm:p-5 space-y-3 sm:space-y-4">
               <div>
-                <label className="text-sm text-gray-700">Certification Number</label>
+                <label className="text-xs sm:text-sm text-gray-700">Certification Number</label>
                 <input
                   type="text"
                   placeholder="ATA-123456"
@@ -304,7 +430,7 @@ export function SettingsClient({ session }: SettingsClientProps) {
                 />
               </div>
               <div>
-                <label className="text-sm text-gray-700">Certifying Body</label>
+                <label className="text-xs sm:text-sm text-gray-700">Certifying Body</label>
                 <select className="mt-1.5 w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                   <option>ATA (American Translators Association)</option>
                   <option>NAJIT</option>
@@ -312,7 +438,7 @@ export function SettingsClient({ session }: SettingsClientProps) {
                 </select>
               </div>
               <div>
-                <label className="text-sm text-gray-700">Languages</label>
+                <label className="text-xs sm:text-sm text-gray-700">Languages</label>
                 <input
                   type="text"
                   placeholder="Spanish → English"
@@ -324,24 +450,24 @@ export function SettingsClient({ session }: SettingsClientProps) {
 
           {/* Security */}
           <div className="bg-white rounded-xl border border-gray-200">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Shield className="h-4 w-4 text-gray-600" />
+            <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 flex items-center gap-2 sm:gap-3">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                <Shield className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-600" />
               </div>
-              <h2 className="font-semibold text-gray-900">Security</h2>
+              <h2 className="font-semibold text-gray-900 text-sm sm:text-base">Security</h2>
             </div>
-            <div className="p-5 space-y-4">
+            <div className="p-4 sm:p-5 space-y-3 sm:space-y-4">
               <Button
                 variant="outline"
-                className="w-full justify-start"
+                className="w-full justify-start text-sm"
                 onClick={() => setShowPasswordModal(true)}
               >
                 Change Password
               </Button>
-              <div className="pt-4 border-t border-gray-100">
-                <p className="text-xs text-gray-500 mb-2">Sessions</p>
-                <p className="text-sm text-gray-700">1 active session</p>
-                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50 mt-2 -ml-2">
+              <div className="pt-3 sm:pt-4 border-t border-gray-100">
+                <p className="text-[10px] sm:text-xs text-gray-500 mb-1.5 sm:mb-2">Sessions</p>
+                <p className="text-xs sm:text-sm text-gray-700">1 active session</p>
+                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50 mt-2 -ml-2 text-xs sm:text-sm">
                   Sign out all devices
                 </Button>
               </div>
@@ -350,22 +476,22 @@ export function SettingsClient({ session }: SettingsClientProps) {
 
           {/* Billing */}
           <div className="bg-white rounded-xl border border-gray-200">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                <CreditCard className="h-4 w-4 text-gray-600" />
+            <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 flex items-center gap-2 sm:gap-3">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-600" />
               </div>
-              <h2 className="font-semibold text-gray-900">Billing</h2>
+              <h2 className="font-semibold text-gray-900 text-sm sm:text-base">Billing</h2>
             </div>
-            <div className="p-5 space-y-3">
+            <div className="p-4 sm:p-5 space-y-2.5 sm:space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Current Plan</span>
-                <span className="text-sm font-medium text-gray-900">Pay-as-you-go</span>
+                <span className="text-xs sm:text-sm text-gray-600">Current Plan</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-900">Pay-as-you-go</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Credits Balance</span>
-                <span className="text-sm font-medium text-gray-900">1,250</span>
+                <span className="text-xs sm:text-sm text-gray-600">Credits Balance</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-900">1,250</span>
               </div>
-              <Button variant="outline" className="w-full mt-2">
+              <Button variant="outline" className="w-full mt-2 text-sm">
                 View Invoices
               </Button>
             </div>

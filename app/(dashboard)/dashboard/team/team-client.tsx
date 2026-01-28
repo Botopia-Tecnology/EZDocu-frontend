@@ -30,7 +30,7 @@ interface TeamClientProps {
     accountName: string;
     ownerId: string;
     currentUserId: string;
-    userType: 'admin' | 'team' | 'member';
+    userType: 'admin' | 'team' | 'member' | 'user';
 }
 
 export function TeamClient({
@@ -129,17 +129,17 @@ export function TeamClient({
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl font-semibold text-gray-900">Team</h1>
-                    <p className="text-gray-500 mt-1">Manage your team members and invitations</p>
+                    <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Team</h1>
+                    <p className="text-gray-500 mt-1 text-sm sm:text-base">Manage your team members and invitations</p>
                 </div>
                 {isOwner && (
                     <Button
                         onClick={() => setIsInviteModalOpen(true)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
+                        className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg w-full sm:w-auto"
                     >
                         <UserPlus className="h-4 w-4 mr-2" />
                         Invite Member
@@ -148,26 +148,26 @@ export function TeamClient({
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white rounded-xl border border-gray-200 p-5">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <Users className="h-5 w-5 text-purple-600" />
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Users className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
                         </div>
                         <div>
-                            <p className="text-2xl font-semibold text-gray-900">{members.length}</p>
-                            <p className="text-sm text-gray-500">Team Members</p>
+                            <p className="text-xl sm:text-2xl font-semibold text-gray-900">{members.length}</p>
+                            <p className="text-xs sm:text-sm text-gray-500">Team Members</p>
                         </div>
                     </div>
                 </div>
-                <div className="bg-white rounded-xl border border-gray-200 p-5">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <Mail className="h-5 w-5 text-purple-600" />
+                <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-5">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
                         </div>
                         <div>
-                            <p className="text-2xl font-semibold text-gray-900">{pendingInvites.length}</p>
-                            <p className="text-sm text-gray-500">Pending Invites</p>
+                            <p className="text-xl sm:text-2xl font-semibold text-gray-900">{pendingInvites.length}</p>
+                            <p className="text-xs sm:text-sm text-gray-500">Pending Invites</p>
                         </div>
                     </div>
                 </div>
@@ -175,12 +175,12 @@ export function TeamClient({
 
             {/* Team Members */}
             <div className="bg-white rounded-xl border border-gray-200">
-                <div className="px-5 py-4 border-b border-gray-100">
-                    <h2 className="font-semibold text-gray-900">Team Members</h2>
+                <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100">
+                    <h2 className="font-semibold text-gray-900 text-sm sm:text-base">Team Members</h2>
                 </div>
                 <div className="divide-y divide-gray-100">
                     {members.length === 0 ? (
-                        <div className="px-5 py-8 text-center text-gray-500">
+                        <div className="px-4 sm:px-5 py-8 text-center text-gray-500 text-sm">
                             No team members yet. Invite someone to get started.
                         </div>
                     ) : (
@@ -188,40 +188,34 @@ export function TeamClient({
                             const role = roleConfig[member.role] || roleConfig.member;
                             const isInactive = member.isActive === false;
                             return (
-                                <div key={member.id} className={`px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors ${isInactive ? 'opacity-60' : ''}`}>
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium ${isInactive ? 'bg-gray-400' : 'bg-gradient-to-br from-gray-700 to-gray-900'}`}>
-                                            {member.firstName?.[0]}{member.lastName?.[0]}
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <p className="text-sm font-medium text-gray-900">
-                                                    {member.firstName} {member.lastName}
-                                                </p>
-                                                {member.isOwner && (
-                                                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                                                        Owner
-                                                    </span>
-                                                )}
-                                                {isInactive && (
-                                                    <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
-                                                        Inactive
-                                                    </span>
-                                                )}
+                                <div key={member.id} className={`px-4 sm:px-5 py-3 sm:py-4 hover:bg-gray-50 transition-colors ${isInactive ? 'opacity-60' : ''}`}>
+                                    {/* Mobile Layout */}
+                                    <div className="sm:hidden">
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 ${isInactive ? 'bg-gray-400' : 'bg-gradient-to-br from-gray-700 to-gray-900'}`}>
+                                                    {member.firstName?.[0]}{member.lastName?.[0]}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-1 flex-wrap">
+                                                        <p className="text-sm font-medium text-gray-900 truncate">
+                                                            {member.firstName} {member.lastName}
+                                                        </p>
+                                                        {member.isOwner && (
+                                                            <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded-full">
+                                                                Owner
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 truncate">{member.email}</p>
+                                                </div>
                                             </div>
-                                            <p className="text-xs text-gray-500">{member.email}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-6">
-                                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${role.bg} ${role.color}`}>
-                                            {member.role}
-                                        </span>
-                                        <div className="text-right">
-                                            <p className="text-sm text-gray-600">Joined</p>
-                                            <p className="text-xs text-gray-500">{formatDate(member.joinedAt)}</p>
+                                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${role.bg} ${role.color}`}>
+                                                {member.role}
+                                            </span>
                                         </div>
                                         {isOwner && !member.isOwner && (
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-xs text-gray-500">
                                                         {member.isActive !== false ? 'Active' : 'Inactive'}
@@ -236,18 +230,84 @@ export function TeamClient({
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50"
                                                     onClick={() => openRemoveConfirm(member)}
                                                     disabled={actionLoadingId === member.id}
                                                 >
                                                     {actionLoadingId === member.id ? (
                                                         <Loader2 className="h-4 w-4 animate-spin" />
                                                     ) : (
-                                                        <X className="h-4 w-4" />
+                                                        <>
+                                                            <X className="h-4 w-4 mr-1" />
+                                                            Remove
+                                                        </>
                                                     )}
                                                 </Button>
                                             </div>
                                         )}
+                                    </div>
+                                    {/* Desktop Layout */}
+                                    <div className="hidden sm:flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-medium ${isInactive ? 'bg-gray-400' : 'bg-gradient-to-br from-gray-700 to-gray-900'}`}>
+                                                {member.firstName?.[0]}{member.lastName?.[0]}
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                        {member.firstName} {member.lastName}
+                                                    </p>
+                                                    {member.isOwner && (
+                                                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                                                            Owner
+                                                        </span>
+                                                    )}
+                                                    {isInactive && (
+                                                        <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">
+                                                            Inactive
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-gray-500">{member.email}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-6">
+                                            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${role.bg} ${role.color}`}>
+                                                {member.role}
+                                            </span>
+                                            <div className="text-right">
+                                                <p className="text-sm text-gray-600">Joined</p>
+                                                <p className="text-xs text-gray-500">{formatDate(member.joinedAt)}</p>
+                                            </div>
+                                            {isOwner && !member.isOwner && (
+                                                <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-gray-500">
+                                                            {member.isActive !== false ? 'Active' : 'Inactive'}
+                                                        </span>
+                                                        <Switch
+                                                            checked={member.isActive !== false}
+                                                            onChange={() => handleToggleStatus(member.id, member.isActive !== false)}
+                                                            disabled={actionLoadingId === member.id}
+                                                            size="sm"
+                                                        />
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                        onClick={() => openRemoveConfirm(member)}
+                                                        disabled={actionLoadingId === member.id}
+                                                    >
+                                                        {actionLoadingId === member.id ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <X className="h-4 w-4" />
+                                                        )}
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             );
@@ -259,31 +319,33 @@ export function TeamClient({
             {/* Pending Invites */}
             {pendingInvites.length > 0 && (
                 <div className="bg-white rounded-xl border border-gray-200">
-                    <div className="px-5 py-4 border-b border-gray-100">
-                        <h2 className="font-semibold text-gray-900">Pending Invitations</h2>
+                    <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100">
+                        <h2 className="font-semibold text-gray-900 text-sm sm:text-base">Pending Invitations</h2>
                     </div>
                     <div className="divide-y divide-gray-100">
                         {pendingInvites.map((invite) => (
-                            <div key={invite.id} className="px-5 py-4 flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                                        <Mail className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">{invite.email}</p>
-                                        <p className="text-xs text-gray-500">Expires {formatDate(invite.expiresAt)}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                                        <Clock className="h-3.5 w-3.5" />
-                                        Sent {formatDate(invite.sentAt)}
+                            <div key={invite.id} className="px-4 sm:px-5 py-3 sm:py-4">
+                                {/* Mobile Layout */}
+                                <div className="sm:hidden">
+                                    <div className="flex items-start gap-3">
+                                        <div className="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <Mail className="h-4 w-4 text-gray-400" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-sm font-medium text-gray-900 truncate">{invite.email}</p>
+                                            <p className="text-xs text-gray-500">Expires {formatDate(invite.expiresAt)}</p>
+                                            <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
+                                                <Clock className="h-3 w-3" />
+                                                Sent {formatDate(invite.sentAt)}
+                                            </div>
+                                        </div>
                                     </div>
                                     {isOwner && (
-                                        <>
+                                        <div className="flex items-center gap-2 mt-3">
                                             <Button
                                                 variant="outline"
                                                 size="sm"
+                                                className="flex-1 text-xs"
                                                 onClick={() => handleResendInvite(invite.id)}
                                                 disabled={actionLoadingId === invite.id}
                                             >
@@ -296,14 +358,57 @@ export function TeamClient({
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                className="flex-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
                                                 onClick={() => handleCancelInvite(invite.id)}
                                                 disabled={actionLoadingId === invite.id}
                                             >
                                                 Cancel
                                             </Button>
-                                        </>
+                                        </div>
                                     )}
+                                </div>
+                                {/* Desktop Layout */}
+                                <div className="hidden sm:flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                                            <Mail className="h-5 w-5 text-gray-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900">{invite.email}</p>
+                                            <p className="text-xs text-gray-500">Expires {formatDate(invite.expiresAt)}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                            <Clock className="h-3.5 w-3.5" />
+                                            Sent {formatDate(invite.sentAt)}
+                                        </div>
+                                        {isOwner && (
+                                            <>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleResendInvite(invite.id)}
+                                                    disabled={actionLoadingId === invite.id}
+                                                >
+                                                    {actionLoadingId === invite.id ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        'Resend'
+                                                    )}
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    onClick={() => handleCancelInvite(invite.id)}
+                                                    disabled={actionLoadingId === invite.id}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -312,14 +417,14 @@ export function TeamClient({
             )}
 
             {/* Info Card */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-5">
-                <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <Shield className="h-5 w-5 text-blue-600" />
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4 sm:p-5">
+                <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                     </div>
                     <div>
-                        <h3 className="font-medium text-gray-900">Team Roles</h3>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <h3 className="font-medium text-gray-900 text-sm sm:text-base">Team Roles</h3>
+                        <p className="text-xs sm:text-sm text-gray-600 mt-1">
                             <strong>Team</strong> members can create and manage orders. <strong>Members</strong> can work on assigned orders.
                             Only account owners can invite new members and manage billing.
                         </p>

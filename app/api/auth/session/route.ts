@@ -18,10 +18,11 @@ export async function POST(request: NextRequest) {
     };
 
     const sessionAccounts: AccountInfo[] = Array.isArray(accounts)
-      ? accounts.map((a: { id: string; name: string; role?: string }) => ({
+      ? accounts.map((a: { id: string; name: string; role?: string; logoUrl?: string }) => ({
           id: a.id,
           name: a.name,
-          role: a.role || 'owner'
+          role: a.role || 'owner',
+          logoUrl: a.logoUrl
         }))
       : [];
 

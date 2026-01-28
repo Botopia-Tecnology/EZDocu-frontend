@@ -7,15 +7,16 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, CheckCircle, ArrowLeft, ArrowUpRight, Eye, EyeOff, X, Mail, KeyRound, RefreshCw } from 'lucide-react';
+import { Loader2, CheckCircle, ArrowLeft, ArrowUpRight, Eye, EyeOff, X, Mail, KeyRound, RefreshCw, Building2, Upload, ImageIcon } from 'lucide-react';
 
-type UserType = 'admin' | 'team' | 'member';
+type UserType = 'admin' | 'team' | 'member' | 'user';
 
 function getRedirectByRole(userType: UserType): string {
   switch (userType) {
     case 'admin': return '/admin';
     case 'team': return '/dashboard';
     case 'member': return '/workspace';
+    case 'user': return '/workspace'; // Usuarios sin company van a workspace
     default: return '/dashboard';
   }
 }
@@ -41,6 +42,57 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
   const [forgotError, setForgotError] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
+  // Company registration states
+  const [isCompany, setIsCompany] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  // Upload logo to Cloudinary
+  const uploadToCloudinary = async (file: File): Promise<string | null> => {
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+    if (!cloudName || !uploadPreset) {
+      console.error('Cloudinary config missing');
+      return null;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', uploadPreset);
+    formData.append('folder', 'ezdocu/logos');
+
+    try {
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        { method: 'POST', body: formData }
+      );
+      const data = await response.json();
+      return data.secure_url || null;
+    } catch (error) {
+      console.error('Cloudinary upload error:', error);
+      return null;
+    }
+  };
+
+  // Handle logo file selection
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Logo must be less than 5MB');
+        return;
+      }
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
@@ -54,12 +106,26 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
       const endpoint = mode === 'signin' ? '/auth/login' : '/auth/register';
 
-      const body: Record<string, string> = { email, password };
+      const body: Record<string, string | undefined> = { email, password };
 
       if (mode === 'signup') {
         body.firstName = formData.get('firstName') as string;
         body.lastName = formData.get('lastName') as string;
-        body.accountName = formData.get('accountName') as string;
+
+        // Solo incluir accountName si es company
+        if (isCompany) {
+          body.accountName = formData.get('accountName') as string;
+
+          // Upload logo if selected
+          if (logoFile) {
+            setUploadingLogo(true);
+            const logoUrl = await uploadToCloudinary(logoFile);
+            setUploadingLogo(false);
+            if (logoUrl) {
+              body.logoUrl = logoUrl;
+            }
+          }
+        }
       }
 
       const response = await fetch(`${apiUrl}${endpoint}`, {
@@ -326,19 +392,68 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="accountName" className="text-sm font-medium text-gray-700">
-                    Company name
-                  </Label>
-                  <Input
-                    id="accountName"
-                    name="accountName"
-                    type="text"
-                    required
-                    className="mt-1.5 h-12 rounded-lg border-gray-200 focus:border-gray-900 focus:ring-gray-900"
-                    placeholder="Acme Translations LLC"
+                {/* Company Checkbox */}
+                <div className="flex items-center gap-2 py-2">
+                  <input
+                    type="checkbox"
+                    id="isCompany"
+                    checked={isCompany}
+                    onChange={(e) => {
+                      setIsCompany(e.target.checked);
+                      if (!e.target.checked) {
+                        setLogoFile(null);
+                        setLogoPreview(null);
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                   />
+                  <label htmlFor="isCompany" className="flex items-center gap-1.5 cursor-pointer text-sm text-gray-600">
+                    <Building2 className="w-4 h-4" />
+                    Register as a company
+                  </label>
                 </div>
+
+                {/* Company Fields - Only show if isCompany */}
+                {isCompany && (
+                  <div className="flex gap-3 items-start">
+                    {/* Logo Upload - Compact */}
+                    <div className="flex-shrink-0">
+                      {logoPreview ? (
+                        <div className="relative w-[72px] h-[72px] rounded-lg overflow-hidden border border-purple-200">
+                          <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => { setLogoFile(null); setLogoPreview(null); }}
+                            className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label
+                          htmlFor="logo-upload"
+                          className="flex flex-col items-center justify-center w-[72px] h-[72px] border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-purple-400 transition-colors"
+                        >
+                          <ImageIcon className="w-5 h-5 text-gray-400" />
+                          <span className="text-[10px] text-gray-400 mt-1">Logo</span>
+                          <input id="logo-upload" type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
+                        </label>
+                      )}
+                    </div>
+                    {/* Company Name */}
+                    <div className="flex-1">
+                      <Label htmlFor="accountName" className="text-sm font-medium text-gray-700">Company name</Label>
+                      <Input
+                        id="accountName"
+                        name="accountName"
+                        type="text"
+                        required={isCompany}
+                        className="mt-1 h-11 rounded-lg border-gray-200 focus:border-purple-500 focus:ring-purple-500"
+                        placeholder="Acme Translations LLC"
+                      />
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
@@ -395,12 +510,12 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
             <Button
               type="submit"
               className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
-              disabled={pending}
+              disabled={pending || uploadingLogo}
             >
-              {pending ? (
+              {pending || uploadingLogo ? (
                 <>
                   <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                  {mode === 'signin' ? 'Signing in...' : 'Creating account...'}
+                  {uploadingLogo ? 'Uploading logo...' : (mode === 'signin' ? 'Signing in...' : 'Creating account...')}
                 </>
               ) : (
                 mode === 'signin' ? 'Sign in' : 'Create account'

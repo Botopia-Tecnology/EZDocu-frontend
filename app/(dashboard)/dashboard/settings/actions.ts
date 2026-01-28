@@ -110,3 +110,44 @@ export async function changePassword(currentPassword: string, newPassword: strin
         return { status: 500, message: 'Connection error. Please try again.' };
     }
 }
+
+export async function updateAccountLogo(accountId: string, imageData: string) {
+    const session = await getSession();
+
+    if (!session || !session.accessToken) {
+        return { status: 401, message: 'Not authenticated' };
+    }
+
+    try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+        const response = await fetch(`${apiUrl}/auth/accounts/${accountId}/logo`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.accessToken}`,
+            },
+            body: JSON.stringify({ imageData }),
+        });
+
+        const result = await response.json();
+
+        // If successful, update the local session with new logo (or null if removed)
+        if (result.status === 200) {
+            const updatedAccounts = session.accounts.map(acc =>
+                acc.id === accountId ? { ...acc, logoUrl: result.account?.logoUrl || null } : acc
+            );
+            await setSession(
+                session.user,
+                session.userType,
+                updatedAccounts,
+                session.accessToken,
+                session.activeAccountId
+            );
+        }
+
+        return result;
+    } catch (error) {
+        console.error('Update account logo error:', error);
+        return { status: 500, message: 'Connection error. Please try again.' };
+    }
+}

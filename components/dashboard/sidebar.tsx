@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -19,9 +20,11 @@ import {
   FileText,
   ToggleRight,
   Award,
+  Menu,
+  X,
 } from 'lucide-react';
 
-type UserType = 'admin' | 'team' | 'member';
+type UserType = 'admin' | 'team' | 'member' | 'user';
 
 interface NavItem {
   label: string;
@@ -53,35 +56,79 @@ const navByRole: Record<UserType, NavItem[]> = {
     { label: 'Orders', href: '/workspace/orders', icon: FileStack },
     { label: 'Settings', href: '/workspace/settings', icon: Settings },
   ],
+  user: [
+    { label: 'My Workspace', href: '/workspace', icon: LayoutDashboard },
+    { label: 'Orders', href: '/workspace/orders', icon: FileStack },
+    { label: 'Credits', href: '/workspace/credits', icon: CreditCard },
+    { label: 'Settings', href: '/workspace/settings', icon: Settings },
+  ],
 };
 
 interface SidebarProps {
   userType: UserType;
   userName?: string;
   accountName?: string;
+  accountLogo?: string;
 }
 
-export function Sidebar({ userType, userName, accountName }: SidebarProps) {
+export function Sidebar({ userType, userName, accountName, accountLogo }: SidebarProps) {
   const pathname = usePathname();
   const navItems = navByRole[userType] || navByRole.team;
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  // Show company logo for team/member roles if available
+  const showCompanyBranding = (userType === 'team' || userType === 'member') && accountLogo;
 
   const handleLogout = async () => {
     await fetch('/api/auth/session', { method: 'DELETE' });
     window.location.href = '/sign-in';
   };
 
-  return (
-    <aside className="w-64 bg-gradient-to-b from-white to-gray-50/50 border-r border-gray-200/80 flex flex-col h-screen fixed left-0 top-0">
-      {/* Logo */}
-      <div className="h-16 px-6 flex items-center">
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileOpen]);
+
+  const SidebarContent = () => (
+    <>
+      {/* Logo - Show company logo for team/member, EZDocu logo for others */}
+      <div className="h-16 px-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
-          <Image src="/icon.svg" alt="" width={28} height={28} className="h-7 w-7" />
-          <span className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">EZDocu</span>
+          {showCompanyBranding ? (
+            <>
+              <img src={accountLogo} alt={accountName || ''} className="h-8 w-8 rounded-lg object-cover" />
+              <span className="text-lg font-semibold text-gray-900 truncate max-w-[140px]">{accountName}</span>
+            </>
+          ) : (
+            <>
+              <Image src="/icon.svg" alt="" width={28} height={28} className="h-7 w-7" />
+              <span className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">EZDocu</span>
+            </>
+          )}
         </Link>
+        {/* Close button for mobile */}
+        <button
+          onClick={() => setIsMobileOpen(false)}
+          className="lg:hidden p-2 -mr-2 text-gray-500 hover:text-gray-700"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
-      {/* Account info */}
-      {accountName && (
+      {/* Account info - Only show if NOT using company branding (for admin/user roles with an account) */}
+      {accountName && !showCompanyBranding && (
         <div className="px-4 pb-4">
           <div className="px-3 py-2.5 bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl border border-purple-100/50">
             <p className="text-[10px] font-semibold text-purple-600/70 uppercase tracking-wider">Account</p>
@@ -136,6 +183,56 @@ export function Sidebar({ userType, userName, accountName }: SidebarProps) {
           Sign out
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile Header */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-40">
+        <Link href="/" className="flex items-center gap-2">
+          {showCompanyBranding ? (
+            <>
+              <img src={accountLogo} alt={accountName || ''} className="h-8 w-8 rounded-lg object-cover" />
+              <span className="text-lg font-semibold text-gray-900 truncate max-w-[140px]">{accountName}</span>
+            </>
+          ) : (
+            <>
+              <Image src="/icon.svg" alt="" width={28} height={28} className="h-7 w-7" />
+              <span className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">EZDocu</span>
+            </>
+          )}
+        </Link>
+        <button
+          onClick={() => setIsMobileOpen(true)}
+          className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+        >
+          <Menu className="h-6 w-6" />
+        </button>
+      </header>
+
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile Sidebar */}
+      <aside
+        className={cn(
+          'lg:hidden fixed top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 flex flex-col z-50 transform transition-transform duration-300 ease-in-out',
+          isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        <SidebarContent />
+      </aside>
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex w-64 bg-gradient-to-b from-white to-gray-50/50 border-r border-gray-200/80 flex-col h-screen fixed left-0 top-0">
+        <SidebarContent />
+      </aside>
+    </>
   );
 }

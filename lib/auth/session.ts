@@ -1,12 +1,13 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-export type UserType = 'admin' | 'team' | 'member';
+export type UserType = 'admin' | 'team' | 'member' | 'user';
 
 export interface AccountInfo {
   id: string;
   name: string;
   role: string;
+  logoUrl?: string;
 }
 
 export interface SessionUser {

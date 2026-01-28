@@ -14,6 +14,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     : session.user.email;
 
   const accountName = session.accounts[0]?.name;
+  const accountLogo = session.accounts[0]?.logoUrl;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -21,8 +22,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
         userType={session.userType}
         userName={userName}
         accountName={accountName}
+        accountLogo={accountLogo}
       />
-      <main className="ml-64 p-8">
+      {/* Main content - add top padding on mobile for fixed header, left margin on desktop for sidebar */}
+      <main className="pt-20 lg:pt-8 px-4 pb-8 lg:ml-64 lg:px-8">
         {children}
       </main>
     </div>

@@ -46,40 +46,43 @@ export default async function TranslatorOrdersPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Orders</h1>
-          <p className="text-gray-500 mt-1">Manage your translation orders</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Orders</h1>
+          <p className="text-gray-500 mt-1 text-sm sm:text-base">Manage your translation orders</p>
         </div>
         <Link href="/dashboard/orders/new">
-          <Button className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg"><Plus className="h-4 w-4 mr-2" />New Order</Button>
+          <Button className="bg-purple-600 hover:bg-purple-700 text-white rounded-lg w-full sm:w-auto"><Plus className="h-4 w-4 mr-2" />New Order</Button>
         </Link>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input type="text" placeholder="Search orders..." className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" />
         </div>
-        <select className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600">
-          <option>All Status</option>
-          <option>Uploaded</option>
-          <option>OCR Review</option>
-          <option>Translating</option>
-          <option>Completed</option>
-        </select>
-        <Button variant="outline" size="sm" className="rounded-lg"><Filter className="h-4 w-4 mr-2" />Filters</Button>
+        <div className="flex items-center gap-2 sm:gap-4">
+          <select className="flex-1 sm:flex-none px-3 sm:px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-600">
+            <option>All Status</option>
+            <option>Uploaded</option>
+            <option>OCR Review</option>
+            <option>Translating</option>
+            <option>Completed</option>
+          </select>
+          <Button variant="outline" size="sm" className="rounded-lg"><Filter className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Filters</span></Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard label="Total Orders" value="164" />
         <StatCard label="In Progress" value="8" color="text-blue-600" />
         <StatCard label="Completed" value="156" color="text-green-600" />
         <StatCard label="This Month" value="24" />
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden lg:block bg-white rounded-xl border border-gray-200 overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50">
@@ -147,15 +150,63 @@ export default async function TranslatorOrdersPage() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Cards */}
+      <div className="lg:hidden space-y-3">
+        {orders.map((order) => {
+          const status = statusConfig[order.status];
+          const docType = docTypeConfig[order.docType];
+          const credits = calcCredits(order.pages, order.docType);
+          return (
+            <Link key={order.id} href={`/dashboard/orders/${order.id}`} className="block bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <FileText className="h-4 w-4 text-gray-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{order.name}</p>
+                    <p className="text-xs text-gray-500 font-mono">{order.id}</p>
+                  </div>
+                </div>
+                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${status.bg} ${status.color}`}>
+                  {status.label}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-3">
+                  <span className={`font-medium px-1.5 py-0.5 rounded ${docType.color}`}>{docType.label}</span>
+                  <span className="text-gray-500">{order.pages} pages</span>
+                  <div className="flex items-center gap-1">
+                    <CreditCard className="h-3 w-3 text-purple-500" />
+                    <span className="font-semibold text-purple-600">{credits}</span>
+                  </div>
+                </div>
+                <span className="text-gray-500">{order.date}</span>
+              </div>
+            </Link>
+          );
+        })}
+        {/* Mobile Pagination */}
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-xs text-gray-500">1-8 of 164</p>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0"><ChevronLeft className="h-4 w-4" /></Button>
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0 bg-purple-600 text-white border-purple-600">1</Button>
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0">2</Button>
+            <Button variant="outline" size="sm" className="h-8 w-8 p-0"><ChevronRight className="h-4 w-4" /></Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 function StatCard({ label, value, color = 'text-gray-900' }: { label: string; value: string; color?: string }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className={`text-2xl font-semibold mt-1 ${color}`}>{value}</p>
+    <div className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4">
+      <p className="text-xs sm:text-sm text-gray-500">{label}</p>
+      <p className={`text-xl sm:text-2xl font-semibold mt-1 ${color}`}>{value}</p>
     </div>
   );
 }

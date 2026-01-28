@@ -9,7 +9,8 @@ function getRedirectByRole(userType: string): string {
     case 'admin': return '/admin';
     case 'team': return '/dashboard';
     case 'member': return '/workspace';
-    default: return '/dashboard';
+    case 'user': return '/workspace'; // Usuario sin company va a workspace
+    default: return '/workspace';
   }
 }
 
@@ -31,7 +32,7 @@ function canAccessRoute(pathname: string, session: SessionData | null): boolean 
   }
 
   if (pathname.startsWith('/workspace')) {
-    return ['admin', 'team', 'member'].includes(userType);
+    return ['admin', 'team', 'member', 'user'].includes(userType);
   }
 
   return true;
