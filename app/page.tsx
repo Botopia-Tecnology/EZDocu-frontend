@@ -127,6 +127,9 @@ const translations = {
     legalContract: 'Legal Contract',
     certificateOfTranslation: 'Certificate of Translation',
     certifiedTranslation: 'Certified Translation',
+    creditsIncluded: 'credits included',
+    perMonth: '/month',
+    perYear: '/year',
   },
   es: {
     features: 'Características',
@@ -242,6 +245,9 @@ const translations = {
     legalContract: 'Contrato Legal',
     certificateOfTranslation: 'Certificado de Traducción',
     certifiedTranslation: 'Traducción Certificada',
+    creditsIncluded: 'créditos incluidos',
+    perMonth: '/mes',
+    perYear: '/año',
   },
   pt: {
     features: 'Recursos',
@@ -357,6 +363,9 @@ const translations = {
     legalContract: 'Contrato Legal',
     certificateOfTranslation: 'Certificado de Tradução',
     certifiedTranslation: 'Tradução Certificada',
+    creditsIncluded: 'créditos incluídos',
+    perMonth: '/mês',
+    perYear: '/ano',
   },
 };
 
@@ -405,7 +414,8 @@ import {
   Minus,
   HelpCircle,
   Menu,
-  X
+  X,
+  Coins
 } from 'lucide-react';
 
 const FEATURES = [
@@ -508,6 +518,8 @@ interface Plan {
   yearlyDiscount: number;
   benefits: string[];
   pagesPerMonth: number | null;
+  creditsMonthly: number | null;
+  creditsYearly: number | null;
   isPopular: boolean;
   isActive: boolean;
   sortOrder: number;
@@ -1316,6 +1328,9 @@ export default function Home() {
                       const price = isYearly ? Math.round(parseFloat(plan.yearlyPrice)) : Math.round(parseFloat(plan.monthlyPrice));
                       const isPopular = plan.isPopular;
                       const isPrimary = plan.buttonVariant === 'primary';
+                      const displayCredits = isYearly
+                        ? (plan.creditsYearly || 0)
+                        : (plan.creditsMonthly || plan.pagesPerMonth || 0);
 
                       return (
                         <div
@@ -1337,7 +1352,7 @@ export default function Home() {
                             <h3 className="text-xl font-semibold text-gray-900">{plan.name}</h3>
                             <p className="text-sm text-gray-500 mt-1">{plan.description}</p>
                           </div>
-                          <div className="flex items-baseline gap-2 mb-6">
+                          <div className="flex items-baseline gap-2 mb-4">
                             <span className="text-5xl font-bold text-gray-900">${price}</span>
                             {price > 0 && (
                               <>
@@ -1350,6 +1365,20 @@ export default function Home() {
                               </>
                             )}
                           </div>
+                          {/* Credits badge */}
+                          {displayCredits > 0 && (
+                            <div className="bg-purple-50 rounded-lg px-3 py-2 mb-6">
+                              <div className="flex items-center gap-2">
+                                <Coins className="w-4 h-4 text-purple-600" />
+                                <span className="text-sm font-semibold text-purple-700">
+                                  {displayCredits.toLocaleString()} {t.creditsIncluded}
+                                </span>
+                                <span className="text-xs text-purple-500">
+                                  {isYearly ? t.perYear : t.perMonth}
+                                </span>
+                              </div>
+                            </div>
+                          )}
                           <ul className="space-y-4 text-sm text-gray-600 flex-1">
                             {plan.benefits.map((benefit, idx) => (
                               <li key={idx} className="flex items-center gap-3">
