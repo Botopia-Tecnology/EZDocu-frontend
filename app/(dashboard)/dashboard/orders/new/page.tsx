@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
+import ComparisonView, { ProcessedPage, StyledBlock } from '@/components/processing/ComparisonView';
 
 // Dynamic import for pdf.js to avoid SSR issues
 const loadPdfJs = async () => {
@@ -414,9 +415,11 @@ function LargePdfPreview({
 
 export default function NewOrderPage() {
   const router = useRouter();
-  const [step, setStep] = useState<'upload' | 'details' | 'review'>('upload');
+  const [step, setStep] = useState<'upload' | 'details' | 'processing' | 'review'>('upload');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [processingProgress, setProcessingProgress] = useState<string>('');
+  const [processedPages, setProcessedPages] = useState<ProcessedPage[]>([]);
 
   // File state
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
@@ -717,42 +720,94 @@ export default function NewOrderPage() {
   const handleAnalyze = async () => {
     if (!fileInfo) return;
 
+    // Move to processing step and show loading
+    setStep('processing');
     setIsLoading(true);
     setError(null);
+    setProcessingProgress('Preparing document...');
 
     try {
-      const token = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('session='))
-        ?.split('=')[1];
+      // Convert file to base64 for processing
+      setProcessingProgress('Converting document to base64...');
+      const arrayBuffer = await fileInfo.file.arrayBuffer();
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer).reduce(
+          (data, byte) => data + String.fromCharCode(byte),
+          ''
+        )
+      );
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/orders/analyze`, {
+      // Generate a temporary order ID for preview
+      const tempOrderId = `preview-${Date.now()}`;
+
+      setProcessingProgress('Running OCR with AWS Textract + Google Document AI...');
+
+      // Call the processing preview endpoint (OCR + style detection)
+      const response = await fetch('/api/processing/preview', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          fileName: fileInfo.name,
-          fileType: fileInfo.type,
-          fileSize: fileInfo.size,
-          totalPages,
-          isImageBased,
+          orderId: tempOrderId,
+          pdfBase64: base64,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to analyze file');
+        throw new Error(data.error || 'Failed to analyze file');
       }
 
-      setAnalysis(data.analysis);
+      setProcessingProgress('Processing complete! Loading results...');
+      console.log('Processing preview results:', data);
+
+      // Convert processing results to ProcessedPage format
+      if (data.pages && data.pages.length > 0) {
+        const pages: ProcessedPage[] = data.pages.map((page: any, index: number) => ({
+          pageIndex: index,
+          originalImageBase64: page.originalImageBase64 || page.imageBase64,
+          processedImageBase64: page.processedImageBase64 || page.originalImageBase64 || page.imageBase64,
+          blocks: page.blocks || [],
+          logos: page.logos || [],
+          pageWidth: page.pageWidth || page.width || 612,
+          pageHeight: page.pageHeight || page.height || 792,
+        }));
+        console.log('[Preview] Mapped pages:', pages.map(p => ({
+          pageIndex: p.pageIndex,
+          hasOriginal: !!p.originalImageBase64,
+          hasProcessed: !!p.processedImageBase64,
+          blocksCount: p.blocks.length,
+          dimensions: `${p.pageWidth}x${p.pageHeight}`
+        })));
+        setProcessedPages(pages);
+      }
+
+      // Create analysis result from processing response
+      const analysisResult: AnalysisResult = {
+        fileName: fileInfo.name,
+        fileType: fileInfo.type,
+        fileSize: fileInfo.size,
+        fileSizeFormatted: formatFileSize(fileInfo.size),
+        totalPages: data.pages?.length || totalPages,
+        documentType: isImageBased ? 'image' : 'text',
+        creditsPerPage: isImageBased ? 2 : 1,
+        creditsRequired: (data.pages?.length || totalPages) * (isImageBased ? 2 : 1),
+        accountCredits: 100, // TODO: Get from user account
+        hasEnoughCredits: true,
+        creditShortfall: 0,
+      };
+
+      setAnalysis(analysisResult);
       setStep('review');
     } catch (err) {
+      console.error('Analysis error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred');
+      setStep('details'); // Go back to details on error
     } finally {
       setIsLoading(false);
+      setProcessingProgress('');
     }
   };
 
@@ -807,7 +862,7 @@ export default function NewOrderPage() {
   const creditsRequired = totalPages * (isImageBased ? 1 : 2);
 
   return (
-    <div className={`mx-auto transition-all ${(step === 'upload' || step === 'details') && fileInfo ? 'max-w-[1600px] px-4' : 'max-w-3xl'}`}>
+    <div className={`mx-auto transition-all ${(step === 'upload' || step === 'details' || step === 'review') && fileInfo ? 'max-w-[1600px] px-4' : step === 'processing' ? 'max-w-3xl' : 'max-w-3xl'}`}>
       {/* Header */}
       <div className="mb-4">
         <Link href="/dashboard/orders" className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 mb-2">
@@ -822,9 +877,11 @@ export default function NewOrderPage() {
       <div className="flex items-center gap-2 mb-4">
         <StepIndicator step={1} label="Upload" active={step === 'upload'} completed={step !== 'upload'} />
         <ChevronRight className="h-4 w-4 text-gray-300" />
-        <StepIndicator step={2} label="Details" active={step === 'details'} completed={step === 'review'} />
+        <StepIndicator step={2} label="Details" active={step === 'details'} completed={step === 'processing' || step === 'review'} />
         <ChevronRight className="h-4 w-4 text-gray-300" />
-        <StepIndicator step={3} label="Review" active={step === 'review'} completed={false} />
+        <StepIndicator step={3} label="Processing" active={step === 'processing'} completed={step === 'review'} />
+        <ChevronRight className="h-4 w-4 text-gray-300" />
+        <StepIndicator step={4} label="Review" active={step === 'review'} completed={false} />
       </div>
 
       {/* Error Alert */}
@@ -1381,9 +1438,55 @@ export default function NewOrderPage() {
         </div>
       )}
 
-      {/* Step 3: Review */}
+      {/* Step 3: Processing */}
+      {step === 'processing' && (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="bg-white rounded-xl border border-gray-200 p-8 max-w-md w-full text-center">
+            <div className="mb-6">
+              <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Loader2 className="h-10 w-10 text-purple-600 animate-spin" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Processing Document</h2>
+              <p className="text-sm text-gray-500">
+                Running OCR with AWS Textract + Google Document AI
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="bg-purple-50 rounded-lg p-4">
+                <p className="text-sm text-purple-700 font-medium">{processingProgress || 'Processing...'}</p>
+              </div>
+
+              <div className="text-xs text-gray-400">
+                This may take a few moments depending on document size
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Step 4: Review */}
       {step === 'review' && fileInfo && analysis && (
         <div className="space-y-6">
+          {/* Visual Comparison Section */}
+          {processedPages.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium text-gray-900">OCR Results - Visual Comparison</h2>
+                <span className="text-sm text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
+                  {processedPages.reduce((acc, p) => acc + p.blocks.length, 0)} text blocks detected
+                </span>
+              </div>
+              {processedPages.map((page, index) => (
+                <ComparisonView
+                  key={index}
+                  page={page}
+                  targetLanguage={targetLanguage}
+                />
+              ))}
+            </div>
+          )}
+
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-6">Review Order</h2>
 

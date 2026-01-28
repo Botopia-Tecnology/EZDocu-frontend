@@ -10,7 +10,13 @@ const nextConfig: NextConfig = {
         pathname: '/**'
       }
     ]
-  }
+  },
+  // Experimental config for app router
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '50mb',
+    },
+  },
 };
 
 export default withSentryConfig(nextConfig, {

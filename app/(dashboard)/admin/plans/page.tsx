@@ -6,5 +6,5 @@ export default async function AdminPlansPage() {
     const session = await getSession();
     if (!session || session.userType !== 'admin') redirect('/dashboard');
 
-    return <PlansAdminClient accessToken={session.accessToken} />;
+    return <PlansAdminClient accessToken={session.accessToken || ''} />;
 }
