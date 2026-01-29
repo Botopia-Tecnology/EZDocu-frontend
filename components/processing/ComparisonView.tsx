@@ -12,6 +12,11 @@ interface BlockStyles {
     hex: string;
     name: string;
   };
+  backgroundColor?: {
+    rgb: [number, number, number];
+    hex: string;
+    name?: string;
+  };
   fontSize: number;
   fontFamily: string;
   fontWeight: string;
@@ -48,6 +53,35 @@ export interface DetectedLogo {
 }
 
 /**
+ * Interface for table cell
+ */
+export interface TableCell {
+  row: number;
+  col: number;
+  text: string;
+  colspan?: number;
+  rowspan?: number;
+  isHeader?: boolean;
+  textColorHex?: string;
+  bgColorHex?: string;
+}
+
+/**
+ * Interface for detected table
+ */
+export interface DetectedTable {
+  id: string;
+  bbox: [number, number, number, number]; // [x, y, width, height]
+  rows: number;
+  cols: number;
+  cells: TableCell[];
+  hasHeaderRow?: boolean;
+  headerBgColor?: string;
+  borderColor?: string;
+  blockIds: number[]; // IDs of OCR blocks that belong to this table
+}
+
+/**
  * Interface for a processed page
  */
 export interface ProcessedPage {
@@ -56,6 +90,7 @@ export interface ProcessedPage {
   processedImageBase64: string;
   blocks: StyledBlock[];
   logos?: DetectedLogo[];
+  tables?: DetectedTable[]; // Tables detected in this page
   pageWidth: number;
   pageHeight: number;
 }
@@ -80,7 +115,7 @@ export default function ComparisonView({
   onTranslate,
   onGeneratePdf,
 }: ComparisonViewProps) {
-  const { pageIndex, originalImageBase64, processedImageBase64, blocks, logos = [], pageWidth, pageHeight } = page;
+  const { pageIndex, originalImageBase64, processedImageBase64, blocks, logos = [], tables = [], pageWidth, pageHeight } = page;
 
   const [selectedBlockIndex, setSelectedBlockIndex] = useState<number | null>(null);
   const [hoveredBlockIndex, setHoveredBlockIndex] = useState<number | null>(null);
@@ -177,6 +212,110 @@ export default function ComparisonView({
   };
 
   /**
+   * Draw a single table on the canvas
+   */
+  const drawTable = (
+    ctx: CanvasRenderingContext2D,
+    table: DetectedTable,
+    scaleX: number,
+    scaleY: number
+  ) => {
+    const [tableX, tableY, tableW, tableH] = table.bbox;
+    const scaledTableX = tableX * scaleX;
+    const scaledTableY = tableY * scaleY;
+    const scaledTableW = tableW * scaleX;
+    const scaledTableH = tableH * scaleY;
+
+    // Calculate cell dimensions
+    const cellWidth = scaledTableW / table.cols;
+    const cellHeight = scaledTableH / table.rows;
+
+    // Draw table background (white)
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(scaledTableX, scaledTableY, scaledTableW, scaledTableH);
+
+    // Draw header row background if exists
+    if (table.hasHeaderRow) {
+      const headerBgColor = table.headerBgColor || '#E0E0E0';
+      ctx.fillStyle = headerBgColor;
+      ctx.fillRect(scaledTableX, scaledTableY, scaledTableW, cellHeight);
+    }
+
+    // Draw each cell
+    for (const cell of table.cells) {
+      const cellX = scaledTableX + cell.col * cellWidth;
+      const cellY = scaledTableY + cell.row * cellHeight;
+      const cWidth = cellWidth * (cell.colspan || 1);
+      const cHeight = cellHeight * (cell.rowspan || 1);
+
+      // Draw cell background if specified
+      if (cell.bgColorHex && cell.bgColorHex !== '#FFFFFF') {
+        ctx.fillStyle = cell.bgColorHex;
+        ctx.fillRect(cellX, cellY, cWidth, cHeight);
+      }
+
+      // Draw cell text
+      if (cell.text) {
+        const textColor = cell.textColorHex || '#000000';
+        ctx.fillStyle = textColor;
+
+        // Calculate font size based on cell height
+        const fontSize = Math.min(cHeight * 0.6, 14);
+        const fontWeight = cell.isHeader ? 'bold' : 'normal';
+        ctx.font = `${fontWeight} ${fontSize}px Arial`;
+        ctx.textBaseline = 'middle';
+
+        // Measure text and truncate if needed
+        let displayText = cell.text;
+        let textWidth = ctx.measureText(displayText).width;
+        const maxWidth = cWidth - 8; // 4px padding on each side
+
+        if (textWidth > maxWidth) {
+          // Truncate with ellipsis
+          while (textWidth > maxWidth && displayText.length > 3) {
+            displayText = displayText.slice(0, -1);
+            textWidth = ctx.measureText(displayText + '...').width;
+          }
+          displayText += '...';
+        }
+
+        // Center text in cell
+        const textX = cellX + (cWidth - ctx.measureText(displayText).width) / 2;
+        const textY = cellY + cHeight / 2;
+        ctx.fillText(displayText, textX, textY);
+      }
+    }
+
+    // Draw table borders
+    const borderColor = table.borderColor || '#000000';
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = 1;
+
+    // Draw outer border
+    ctx.strokeRect(scaledTableX, scaledTableY, scaledTableW, scaledTableH);
+
+    // Draw row lines
+    for (let row = 1; row < table.rows; row++) {
+      const y = scaledTableY + row * cellHeight;
+      ctx.beginPath();
+      ctx.moveTo(scaledTableX, y);
+      ctx.lineTo(scaledTableX + scaledTableW, y);
+      ctx.stroke();
+    }
+
+    // Draw column lines
+    for (let col = 1; col < table.cols; col++) {
+      const x = scaledTableX + col * cellWidth;
+      ctx.beginPath();
+      ctx.moveTo(x, scaledTableY);
+      ctx.lineTo(x, scaledTableY + scaledTableH);
+      ctx.stroke();
+    }
+
+    console.log(`📊 Rendered table "${table.id}": ${table.rows}x${table.cols} at [${scaledTableX.toFixed(0)}, ${scaledTableY.toFixed(0)}]`);
+  };
+
+  /**
    * Draw blocks on canvas
    */
   const drawBlocks = (
@@ -185,9 +324,11 @@ export default function ComparisonView({
     renderText: boolean = false,
     mode: 'blank' | 'overlay' | 'replace' = 'blank',
     backgroundImage?: HTMLImageElement,
-    blocksToRender?: StyledBlock[]
+    blocksToRender?: StyledBlock[],
+    tablesToRender?: DetectedTable[]
   ) => {
     const activeBlocks = blocksToRender || editableBlocks;
+    const activeTables = tablesToRender || tables;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
@@ -265,75 +406,90 @@ export default function ComparisonView({
 
         ctx.save();
 
-        // In 'replace' mode: detect background color and draw rectangle to cover original text
-        if (mode === 'replace' && backgroundImage) {
-          const tempCanvas = document.createElement('canvas');
-          const tempCtx = tempCanvas.getContext('2d');
-          if (tempCtx) {
-            tempCanvas.width = backgroundImage.naturalWidth;
-            tempCanvas.height = backgroundImage.naturalHeight;
-            tempCtx.drawImage(backgroundImage, 0, 0);
+        // In 'replace' or 'blank' modes: draw background color for the block
+        // PRIORITY: Use backgroundColor from backend if exists, otherwise detect from context
+        if (mode === 'replace' || mode === 'blank') {
+          let bgR = 255, bgG = 255, bgB = 255;
+          let bgSource = 'default';
 
-            const samplePoints: { x: number; y: number }[] = [];
+          // 1. FIRST: Use backgroundColor from backend (more accurate)
+          if (block.styles.backgroundColor && Array.isArray(block.styles.backgroundColor.rgb) && block.styles.backgroundColor.rgb.length >= 3) {
+            bgR = block.styles.backgroundColor.rgb[0];
+            bgG = block.styles.backgroundColor.rgb[1];
+            bgB = block.styles.backgroundColor.rgb[2];
+            bgSource = 'backend';
+            console.log(`   🎨 Background from backend: rgb(${bgR}, ${bgG}, ${bgB}) - ${block.styles.backgroundColor.hex}`);
+          }
+          // 2. FALLBACK: Detect from image context (only in replace mode with image)
+          else if (mode === 'replace' && backgroundImage) {
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            if (tempCtx) {
+              tempCanvas.width = backgroundImage.naturalWidth;
+              tempCanvas.height = backgroundImage.naturalHeight;
+              tempCtx.drawImage(backgroundImage, 0, 0);
 
-            for (const margin of [5, 15, 25]) {
-              for (const pct of [0.2, 0.4, 0.6, 0.8]) {
-                samplePoints.push({ x: Math.floor(x + width * pct), y: Math.floor(y - margin) });
-                samplePoints.push({ x: Math.floor(x + width * pct), y: Math.floor(y + height + margin) });
+              const samplePoints: { x: number; y: number }[] = [];
+              for (const margin of [5, 15, 25]) {
+                for (const pct of [0.2, 0.4, 0.6, 0.8]) {
+                  samplePoints.push({ x: Math.floor(x + width * pct), y: Math.floor(y - margin) });
+                  samplePoints.push({ x: Math.floor(x + width * pct), y: Math.floor(y + height + margin) });
+                }
+                for (const pct of [0.3, 0.5, 0.7]) {
+                  samplePoints.push({ x: Math.floor(x - margin), y: Math.floor(y + height * pct) });
+                  samplePoints.push({ x: Math.floor(x + width + margin), y: Math.floor(y + height * pct) });
+                }
               }
-              for (const pct of [0.3, 0.5, 0.7]) {
-                samplePoints.push({ x: Math.floor(x - margin), y: Math.floor(y + height * pct) });
-                samplePoints.push({ x: Math.floor(x + width + margin), y: Math.floor(y + height * pct) });
+
+              const bgColors: { r: number; g: number; b: number }[] = [];
+              for (const point of samplePoints) {
+                const px = Math.max(0, Math.min(point.x, tempCanvas.width - 1));
+                const py = Math.max(0, Math.min(point.y, tempCanvas.height - 1));
+                const pixelData = tempCtx.getImageData(px, py, 1, 1).data;
+                const brightness = (pixelData[0] + pixelData[1] + pixelData[2]) / 3;
+                if (brightness > 80) {
+                  bgColors.push({ r: pixelData[0], g: pixelData[1], b: pixelData[2] });
+                }
               }
-            }
 
-            const bgColors: { r: number; g: number; b: number }[] = [];
-
-            for (const point of samplePoints) {
-              const px = Math.max(0, Math.min(point.x, tempCanvas.width - 1));
-              const py = Math.max(0, Math.min(point.y, tempCanvas.height - 1));
-              const pixelData = tempCtx.getImageData(px, py, 1, 1).data;
-              const brightness = (pixelData[0] + pixelData[1] + pixelData[2]) / 3;
-              if (brightness > 80) {
-                bgColors.push({ r: pixelData[0], g: pixelData[1], b: pixelData[2] });
-              }
-            }
-
-            let bgR = 255, bgG = 255, bgB = 255;
-
-            if (bgColors.length >= 3) {
-              const colorGroups: { r: number; g: number; b: number; count: number }[] = [];
-              const tolerance = 25;
-
-              for (const color of bgColors) {
-                let foundGroup = false;
-                for (const group of colorGroups) {
-                  const dist = Math.abs(color.r - group.r) + Math.abs(color.g - group.g) + Math.abs(color.b - group.b);
-                  if (dist <= tolerance * 3) {
-                    group.r = Math.round((group.r * group.count + color.r) / (group.count + 1));
-                    group.g = Math.round((group.g * group.count + color.g) / (group.count + 1));
-                    group.b = Math.round((group.b * group.count + color.b) / (group.count + 1));
-                    group.count++;
-                    foundGroup = true;
-                    break;
+              if (bgColors.length >= 3) {
+                const colorGroups: { r: number; g: number; b: number; count: number }[] = [];
+                const tolerance = 25;
+                for (const color of bgColors) {
+                  let foundGroup = false;
+                  for (const group of colorGroups) {
+                    const dist = Math.abs(color.r - group.r) + Math.abs(color.g - group.g) + Math.abs(color.b - group.b);
+                    if (dist <= tolerance * 3) {
+                      group.r = Math.round((group.r * group.count + color.r) / (group.count + 1));
+                      group.g = Math.round((group.g * group.count + color.g) / (group.count + 1));
+                      group.b = Math.round((group.b * group.count + color.b) / (group.count + 1));
+                      group.count++;
+                      foundGroup = true;
+                      break;
+                    }
+                  }
+                  if (!foundGroup) {
+                    colorGroups.push({ ...color, count: 1 });
                   }
                 }
-                if (!foundGroup) {
-                  colorGroups.push({ ...color, count: 1 });
+                colorGroups.sort((a, b) => b.count - a.count);
+                if (colorGroups.length > 0) {
+                  bgR = colorGroups[0].r;
+                  bgG = colorGroups[0].g;
+                  bgB = colorGroups[0].b;
+                  bgSource = 'context-detection';
                 }
               }
-
-              colorGroups.sort((a, b) => b.count - a.count);
-              if (colorGroups.length > 0) {
-                bgR = colorGroups[0].r;
-                bgG = colorGroups[0].g;
-                bgB = colorGroups[0].b;
-              }
+              console.log(`   🎨 Background detected from context: rgb(${bgR}, ${bgG}, ${bgB})`);
             }
-
-            ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
-            ctx.fillRect(scaledX, scaledY, scaledWidth, scaledHeight);
           }
+
+          // Draw background rectangle
+          ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
+          ctx.fillRect(scaledX, scaledY, scaledWidth, scaledHeight);
+          console.log(`   🎨 Background applied (${bgSource}): rgb(${bgR}, ${bgG}, ${bgB})`);
+
+          // Restore text color
           ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
         }
 
@@ -432,6 +588,14 @@ export default function ComparisonView({
         ctx.fillText(textPreview, scaledX + 4, scaledY - 8);
       }
     });
+
+    // Draw tables if rendering text and tables exist
+    if (renderText && activeTables && activeTables.length > 0) {
+      console.log(`\n📊 Rendering ${activeTables.length} tables...`);
+      for (const table of activeTables) {
+        drawTable(ctx, table, scaleX, scaleY);
+      }
+    }
   };
 
   /**
@@ -616,7 +780,7 @@ export default function ComparisonView({
         const leftRect = leftImg.getBoundingClientRect();
         leftCanvas.style.width = `${leftRect.width}px`;
         leftCanvas.style.height = `${leftRect.height}px`;
-        drawBlocks(leftCanvas, leftImg, false);
+        drawBlocks(leftCanvas, leftImg, false, 'blank', undefined, undefined, tables);
       }
 
       const blocksForRender = (showTranslation && translatedBlocks) ? translatedBlocks : editableBlocks;
@@ -630,17 +794,17 @@ export default function ComparisonView({
         if (reconstructionMode === 'overlay' || reconstructionMode === 'replace') {
           const bgImg = new Image();
           bgImg.onload = () => {
-            drawBlocks(rightCanvas, rightImg, true, reconstructionMode, bgImg, blocksForRender);
+            drawBlocks(rightCanvas, rightImg, true, reconstructionMode, bgImg, blocksForRender, tables);
           };
           bgImg.src = `data:image/png;base64,${originalImageBase64}`;
         } else {
-          drawBlocks(rightCanvas, rightImg, true, 'blank', undefined, blocksForRender);
+          drawBlocks(rightCanvas, rightImg, true, 'blank', undefined, blocksForRender, tables);
         }
       }
     }, 150);
 
     return () => clearTimeout(timer);
-  }, [blocks, editableBlocks, selectedBlockIndex, hoveredBlockIndex, showOverlay, reconstructionMode, originalImageBase64, showTranslation, translatedBlocks, pageIndex]);
+  }, [blocks, editableBlocks, selectedBlockIndex, hoveredBlockIndex, showOverlay, reconstructionMode, originalImageBase64, showTranslation, translatedBlocks, pageIndex, tables]);
 
   const selectedBlock = selectedBlockIndex !== null ? editableBlocks[selectedBlockIndex] : null;
 
@@ -714,7 +878,7 @@ export default function ComparisonView({
                   leftCanvasRef.current.style.width = `${rect.width}px`;
                   leftCanvasRef.current.style.height = `${rect.height}px`;
                 }
-                drawBlocks(leftCanvasRef.current!, img, false);
+                drawBlocks(leftCanvasRef.current!, img, false, 'blank', undefined, undefined, tables);
               }}
             />
             <canvas
@@ -873,14 +1037,14 @@ export default function ComparisonView({
                   bgImg.onload = () => {
                     if (rightCanvasRef.current) {
                       console.log(`[RIGHT onLoad] Drawing with background image`);
-                      drawBlocks(rightCanvasRef.current, img, true, reconstructionMode, bgImg, blocksForRender);
+                      drawBlocks(rightCanvasRef.current, img, true, reconstructionMode, bgImg, blocksForRender, tables);
                     }
                   };
                   bgImg.src = `data:image/png;base64,${originalImageBase64}`;
                 } else {
                   if (rightCanvasRef.current) {
                     console.log(`[RIGHT onLoad] Drawing blank mode`);
-                    drawBlocks(rightCanvasRef.current, img, true, 'blank', undefined, blocksForRender);
+                    drawBlocks(rightCanvasRef.current, img, true, 'blank', undefined, blocksForRender, tables);
                   }
                 }
               }}
@@ -950,18 +1114,36 @@ export default function ComparisonView({
                   </div>
 
                   <div className="bg-white rounded-lg p-3 border border-purple-200">
-                    <p className="text-xs text-purple-600 font-semibold mb-2">COLOR:</p>
-                    <div className="flex items-center space-x-2">
-                      <div
-                        className="w-8 h-8 rounded border-2 border-gray-300 shadow-inner"
-                        style={{ backgroundColor: selectedBlock.styles.color.hex }}
-                      />
-                      <div className="text-xs">
-                        <p className="font-mono font-semibold text-gray-800">
-                          {selectedBlock.styles.color.hex}
-                        </p>
-                        <p className="text-gray-600">{selectedBlock.styles.color.name}</p>
+                    <p className="text-xs text-purple-600 font-semibold mb-2">COLORS:</p>
+                    <div className="space-y-2">
+                      {/* Text Color */}
+                      <div className="flex items-center space-x-2">
+                        <div
+                          className="w-6 h-6 rounded border-2 border-gray-300 shadow-inner"
+                          style={{ backgroundColor: selectedBlock.styles.color.hex }}
+                        />
+                        <div className="text-xs">
+                          <p className="font-mono font-semibold text-gray-800">
+                            {selectedBlock.styles.color.hex}
+                          </p>
+                          <p className="text-gray-500 text-[10px]">Text</p>
+                        </div>
                       </div>
+                      {/* Background Color */}
+                      {selectedBlock.styles.backgroundColor && (
+                        <div className="flex items-center space-x-2">
+                          <div
+                            className="w-6 h-6 rounded border-2 border-gray-300 shadow-inner"
+                            style={{ backgroundColor: selectedBlock.styles.backgroundColor.hex }}
+                          />
+                          <div className="text-xs">
+                            <p className="font-mono font-semibold text-gray-800">
+                              {selectedBlock.styles.backgroundColor.hex}
+                            </p>
+                            <p className="text-gray-500 text-[10px]">Background</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
