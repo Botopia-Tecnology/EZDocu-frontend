@@ -576,20 +576,6 @@ export default function ComparisonView({
 
         ctx.fillRect(scaledX, scaledY, scaledWidth, scaledHeight);
         ctx.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
-
-        // Show block number for all blocks (small label in corner)
-        const label = `${index + 1}`;
-        ctx.font = 'bold 10px sans-serif';
-        const labelWidth = ctx.measureText(label).width + 6;
-        const labelHeight = 14;
-
-        // Draw label background
-        ctx.fillStyle = strokeColor;
-        ctx.fillRect(scaledX, scaledY, labelWidth, labelHeight);
-
-        // Draw label text
-        ctx.fillStyle = 'white';
-        ctx.fillText(label, scaledX + 3, scaledY + 10);
       }
 
       // Show tooltip only for selected or hovered blocks
@@ -866,58 +852,7 @@ export default function ComparisonView({
 
       {/* Comparative grid - 50/50 split with max size */}
       <div className="flex divide-x divide-purple-200">
-        {/* Left: Original PDF with detected blocks */}
-        <div className="w-1/2 bg-gray-50 p-2 flex flex-col">
-          <div className="mb-1 flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-              Original + Blocks
-            </span>
-            <span className="text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded">
-              {blocks.length} blocks
-            </span>
-          </div>
-          <div className="relative border border-gray-300 rounded bg-white flex-1">
-            <img
-              src={`data:image/png;base64,${originalImageBase64}`}
-              alt="PDF Original Background"
-              className="w-full h-auto block"
-            />
-            <img
-              id={`comparison-left-${pageIndex}`}
-              src={`data:image/png;base64,${processedImageBase64}`}
-              alt="Reference"
-              className="absolute top-0 left-0 w-full h-auto opacity-0 pointer-events-none"
-              onLoad={(e) => {
-                const img = e.currentTarget as HTMLImageElement;
-                // Set canvas CSS dimensions to match image display size
-                if (leftCanvasRef.current) {
-                  const rect = img.getBoundingClientRect();
-                  leftCanvasRef.current.style.width = `${rect.width}px`;
-                  leftCanvasRef.current.style.height = `${rect.height}px`;
-                }
-                drawBlocks(leftCanvasRef.current!, img, false, 'blank', undefined, undefined, tables);
-              }}
-            />
-            <canvas
-              ref={leftCanvasRef}
-              className="absolute top-0 left-0 w-full h-full pointer-events-auto cursor-crosshair"
-              onClick={(e) => {
-                const img = document.getElementById(
-                  `comparison-left-${pageIndex}`
-                ) as HTMLImageElement;
-                handleCanvasClick(e, leftCanvasRef.current!, img);
-              }}
-              onMouseMove={(e) => {
-                const img = document.getElementById(
-                  `comparison-left-${pageIndex}`
-                ) as HTMLImageElement;
-                handleCanvasMouseMove(e, leftCanvasRef.current!, img);
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Right: Reconstructed preview */}
+        {/* Left: Reconstructed preview */}
         <div className="w-1/2 bg-purple-50 p-2 flex flex-col">
           <div className="mb-1 flex items-center justify-between flex-wrap gap-1">
             <div className="flex items-center space-x-2">
@@ -963,68 +898,6 @@ export default function ComparisonView({
                 Replace
               </button>
             </div>
-          </div>
-
-          {/* Translation and PDF buttons */}
-          <div className="mb-1 flex items-center justify-between flex-wrap gap-1">
-            <div className="flex items-center space-x-1">
-              <button
-                onClick={translateBlocks}
-                disabled={isTranslating}
-                className={`px-2 py-1 text-xs rounded font-medium transition-colors flex items-center ${
-                  isTranslating
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-                title={`Translate text to ${targetLanguage}`}
-              >
-                {isTranslating ? (
-                  <>
-                    <Loader2 className="animate-spin -ml-1 mr-1 h-3 w-3" />
-                    ...
-                  </>
-                ) : (
-                  <>{targetLanguage.toUpperCase()}</>
-                )}
-              </button>
-              {translatedBlocks && (
-                <label className="flex items-center text-xs text-blue-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={showTranslation}
-                    onChange={(e) => setShowTranslation(e.target.checked)}
-                    className="mr-1"
-                  />
-                  Show
-                </label>
-              )}
-              {/* Generate PDF button - temporarily hidden
-              <button
-                onClick={generatePDF}
-                disabled={isGeneratingPDF}
-                className={`px-3 py-1.5 text-xs rounded font-medium transition-colors flex items-center ${
-                  isGeneratingPDF
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-green-600 text-white hover:bg-green-700'
-                }`}
-                title="Download PDF with current text"
-              >
-                {isGeneratingPDF ? (
-                  <>
-                    <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                    Generating...
-                  </>
-                ) : (
-                  <>Generate PDF</>
-                )}
-              </button>
-              */}
-            </div>
-            {translatedBlocks && showTranslation && (
-              <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
-                {targetLanguage.toUpperCase()}
-              </span>
-            )}
           </div>
 
           <div className="relative border border-purple-300 rounded bg-white flex-1">
@@ -1084,6 +957,57 @@ export default function ComparisonView({
                 if (img && rightCanvasRef.current) {
                   handleCanvasMouseMove(e, rightCanvasRef.current, img);
                 }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Right: Original PDF with detected blocks */}
+        <div className="w-1/2 bg-gray-50 p-2 flex flex-col">
+          <div className="mb-1 flex items-center justify-between">
+            <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              Original + Blocks
+            </span>
+            <span className="text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded">
+              {blocks.length} blocks
+            </span>
+          </div>
+          <div className="relative border border-gray-300 rounded bg-white flex-1">
+            <img
+              src={`data:image/png;base64,${originalImageBase64}`}
+              alt="PDF Original Background"
+              className="w-full h-auto block"
+            />
+            <img
+              id={`comparison-left-${pageIndex}`}
+              src={`data:image/png;base64,${processedImageBase64}`}
+              alt="Reference"
+              className="absolute top-0 left-0 w-full h-auto opacity-0 pointer-events-none"
+              onLoad={(e) => {
+                const img = e.currentTarget as HTMLImageElement;
+                // Set canvas CSS dimensions to match image display size
+                if (leftCanvasRef.current) {
+                  const rect = img.getBoundingClientRect();
+                  leftCanvasRef.current.style.width = `${rect.width}px`;
+                  leftCanvasRef.current.style.height = `${rect.height}px`;
+                }
+                drawBlocks(leftCanvasRef.current!, img, false, 'blank', undefined, undefined, tables);
+              }}
+            />
+            <canvas
+              ref={leftCanvasRef}
+              className="absolute top-0 left-0 w-full h-full pointer-events-auto cursor-crosshair"
+              onClick={(e) => {
+                const img = document.getElementById(
+                  `comparison-left-${pageIndex}`
+                ) as HTMLImageElement;
+                handleCanvasClick(e, leftCanvasRef.current!, img);
+              }}
+              onMouseMove={(e) => {
+                const img = document.getElementById(
+                  `comparison-left-${pageIndex}`
+                ) as HTMLImageElement;
+                handleCanvasMouseMove(e, leftCanvasRef.current!, img);
               }}
             />
           </div>

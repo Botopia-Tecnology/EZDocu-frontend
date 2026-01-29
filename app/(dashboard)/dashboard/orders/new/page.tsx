@@ -276,17 +276,21 @@ function LargePdfPreview({
 
         if (cancelled) return;
 
-        // Get container dimensions
-        const containerWidth = containerRef.current.clientWidth - 32; // padding
-        const containerHeight = containerRef.current.clientHeight - 80; // space for nav buttons
+        // Get container dimensions - minimal padding to maximize preview
+        const containerWidth = containerRef.current.clientWidth - 8; // minimal padding
+        const containerHeight = containerRef.current.clientHeight - 50; // space for nav buttons
 
         // Calculate scale to fit container while maintaining aspect ratio
         const viewport = page.getViewport({ scale: 1 });
         const scaleX = containerWidth / viewport.width;
         const scaleY = containerHeight / viewport.height;
-        const scale = Math.min(scaleX, scaleY, 3); // Max scale of 3 for better quality
+        const baseScale = Math.min(scaleX, scaleY);
 
-        const scaledViewport = page.getViewport({ scale });
+        // Use device pixel ratio for HD rendering on retina displays
+        const pixelRatio = window.devicePixelRatio || 1;
+        const renderScale = baseScale * pixelRatio;
+
+        const scaledViewport = page.getViewport({ scale: renderScale });
 
         const canvas = canvasRef.current;
         const context = canvas.getContext('2d');
@@ -296,8 +300,13 @@ function LargePdfPreview({
           return;
         }
 
+        // Set canvas size for high resolution rendering
         canvas.width = scaledViewport.width;
         canvas.height = scaledViewport.height;
+
+        // Scale down canvas display size to fit container (CSS pixels)
+        canvas.style.width = `${scaledViewport.width / pixelRatio}px`;
+        canvas.style.height = `${scaledViewport.height / pixelRatio}px`;
 
         await page.render({
           canvasContext: context,
@@ -351,27 +360,27 @@ function LargePdfPreview({
   }
 
   return (
-    <div ref={containerRef} className="relative w-full h-full flex flex-col items-center justify-center p-4">
+    <div ref={containerRef} className="relative w-full h-full flex flex-col items-center justify-center p-1">
       {/* Canvas container */}
       <div className="flex-1 flex items-center justify-center w-full relative">
         {isRendering && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-10">
             <div className="text-center">
-              <Loader2 className="h-10 w-10 text-gray-400 animate-spin mx-auto" />
-              <p className="text-sm text-gray-500 mt-3">Loading page {currentPage}...</p>
+              <Loader2 className="h-8 w-8 text-gray-400 animate-spin mx-auto" />
+              <p className="text-xs text-gray-500 mt-2">Loading page {currentPage}...</p>
             </div>
           </div>
         )}
         <canvas
           ref={canvasRef}
-          className={`max-w-full max-h-full object-contain shadow-lg rounded ${isRendering ? 'opacity-0' : 'opacity-100'}`}
+          className={`max-w-full max-h-full object-contain shadow rounded ${isRendering ? 'opacity-0' : 'opacity-100'}`}
           style={{ transition: 'opacity 0.3s' }}
         />
       </div>
 
       {/* Page Navigation */}
       {numPages > 1 && (
-        <div className="flex items-center gap-4 mt-4 bg-white rounded-lg shadow-md px-4 py-2 border border-gray-200">
+        <div className="flex items-center gap-3 mt-2 bg-white rounded-lg shadow-sm px-3 py-1.5 border border-gray-200">
           <button
             onClick={goToPrevPage}
             disabled={currentPage === 1 || isRendering}
@@ -862,16 +871,18 @@ export default function NewOrderPage() {
   const creditsRequired = totalPages * (isImageBased ? 1 : 2);
 
   return (
-    <div className={`mx-auto transition-all ${(step === 'upload' || step === 'details' || step === 'review') && fileInfo ? 'max-w-[1600px] px-4' : step === 'processing' ? 'max-w-3xl' : 'max-w-3xl'}`}>
-      {/* Header */}
-      <div className="mb-4">
-        <Link href="/dashboard/orders" className="inline-flex items-center text-sm text-gray-500 hover:text-gray-900 mb-2">
-          <ArrowLeft className="h-4 w-4 mr-1" />
+    <>
+      {/* Mini Header - Sticky at top, respects sidebar */}
+      <div className="sticky top-0 z-40 bg-purple-600 text-white px-6 py-3 flex items-center justify-between shadow-lg -mx-8 -mt-8 mb-4">
+        <Link href="/dashboard/orders" className="inline-flex items-center text-sm font-medium hover:text-purple-100 transition-colors">
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Orders
         </Link>
-        <h1 className="text-2xl font-semibold text-gray-900">New Translation Order</h1>
-        <p className="text-gray-500 mt-1">Upload a document to start the translation process</p>
+        <span className="text-white font-medium">New Translation Order</span>
       </div>
+
+      {/* Main content */}
+      <div className={`mx-auto transition-all duration-300 ${fileInfo ? 'max-w-[1600px] px-4' : 'max-w-3xl'}`}>
 
       {/* Progress Steps */}
       <div className="flex items-center gap-2 mb-4">
@@ -1104,16 +1115,16 @@ export default function NewOrderPage() {
 
           {/* Right side - Document Preview Viewer */}
           {fileInfo && (
-            <div className="bg-white rounded-xl border border-gray-200 p-3 flex flex-col" style={{ height: 'calc(100vh - 160px)', maxHeight: '850px' }}>
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium text-gray-700">Document Preview</h3>
-                {fileInfo.detectedType !== 'pdf' && (
-                  <span className="text-xs text-gray-500">Page 1{fileInfo.detectedPages && fileInfo.detectedPages > 1 ? ` of ${fileInfo.detectedPages}` : ''}</span>
+            <div className="bg-white rounded-xl border border-gray-200 p-1.5 flex flex-col" style={{ height: 'calc(100vh - 160px)', maxHeight: '850px' }}>
+              <div className="flex items-center justify-between px-1.5 py-1">
+                <h3 className="text-xs font-medium text-gray-600">Document Preview</h3>
+                {fileInfo.detectedType !== 'pdf' && fileInfo.detectedPages && fileInfo.detectedPages > 1 && (
+                  <span className="text-xs text-gray-400">1 / {fileInfo.detectedPages}</span>
                 )}
               </div>
 
-              {/* Large Preview Container */}
-              <div className="bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-y-auto flex-1">
+              {/* Large Preview Container - minimal padding */}
+              <div className="bg-gray-50 rounded border border-gray-100 flex items-center justify-center overflow-y-auto flex-1">
                 {fileInfo.isAnalyzing ? (
                   <div className="text-center">
                     <Loader2 className="h-12 w-12 text-gray-400 animate-spin mx-auto" />
@@ -1385,16 +1396,16 @@ export default function NewOrderPage() {
         </div>
 
           {/* Right side - Document Preview */}
-          <div className="bg-white rounded-xl border border-gray-200 p-3 flex flex-col" style={{ height: 'calc(100vh - 160px)', maxHeight: '850px' }}>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-700">Document Preview</h3>
-              {fileInfo.detectedType !== 'pdf' && (
-                <span className="text-xs text-gray-500">Page 1{fileInfo.detectedPages && fileInfo.detectedPages > 1 ? ` of ${fileInfo.detectedPages}` : ''}</span>
+          <div className="bg-white rounded-xl border border-gray-200 p-1.5 flex flex-col" style={{ height: 'calc(100vh - 160px)', maxHeight: '850px' }}>
+            <div className="flex items-center justify-between px-1.5 py-1">
+              <h3 className="text-xs font-medium text-gray-600">Document Preview</h3>
+              {fileInfo.detectedType !== 'pdf' && fileInfo.detectedPages && fileInfo.detectedPages > 1 && (
+                <span className="text-xs text-gray-400">1 / {fileInfo.detectedPages}</span>
               )}
             </div>
 
-            {/* Large Preview Container */}
-            <div className="bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-y-auto flex-1">
+            {/* Large Preview Container - minimal padding */}
+            <div className="bg-gray-50 rounded border border-gray-100 flex items-center justify-center overflow-y-auto flex-1">
               {fileInfo.isAnalyzing ? (
                 <div className="text-center">
                   <Loader2 className="h-12 w-12 text-gray-400 animate-spin mx-auto" />
@@ -1439,27 +1450,60 @@ export default function NewOrderPage() {
       )}
 
       {/* Step 3: Processing */}
-      {step === 'processing' && (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="bg-white rounded-xl border border-gray-200 p-8 max-w-md w-full text-center">
-            <div className="mb-6">
-              <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      {step === 'processing' && fileInfo && (
+        <div className="grid grid-cols-2 gap-4">
+          {/* Left side - Processing status */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col" style={{ height: 'calc(100vh - 160px)', maxHeight: '850px' }}>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">Processing Document</h2>
+
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mb-6">
                 <Loader2 className="h-10 w-10 text-purple-600 animate-spin" />
               </div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Processing Document</h2>
-              <p className="text-sm text-gray-500">
+
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Analyzing Document</h3>
+              <p className="text-sm text-gray-500 text-center mb-6">
                 Running OCR with AWS Textract + Google Document AI
               </p>
+
+              <div className="w-full max-w-sm space-y-3">
+                <div className="bg-purple-50 rounded-lg p-4">
+                  <p className="text-sm text-purple-700 font-medium text-center">{processingProgress || 'Processing...'}</p>
+                </div>
+
+                <div className="text-xs text-gray-400 text-center">
+                  This may take a few moments depending on document size
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right side - Document Preview */}
+          <div className="bg-white rounded-xl border border-gray-200 p-1.5 flex flex-col" style={{ height: 'calc(100vh - 160px)', maxHeight: '850px' }}>
+            <div className="flex items-center justify-between px-1.5 py-1">
+              <h3 className="text-xs font-medium text-gray-600">Document Preview</h3>
             </div>
 
-            <div className="space-y-3">
-              <div className="bg-purple-50 rounded-lg p-4">
-                <p className="text-sm text-purple-700 font-medium">{processingProgress || 'Processing...'}</p>
-              </div>
-
-              <div className="text-xs text-gray-400">
-                This may take a few moments depending on document size
-              </div>
+            <div className="bg-gray-50 rounded border border-gray-100 flex items-center justify-center overflow-y-auto flex-1">
+              {fileInfo.detectedType === 'image' && fileInfo.preview ? (
+                <img
+                  src={fileInfo.preview}
+                  alt="Document Preview"
+                  className="max-w-full max-h-full object-contain"
+                />
+              ) : fileInfo.detectedType === 'pdf' ? (
+                <LargePdfPreview
+                  file={fileInfo.file}
+                  totalPages={fileInfo.detectedPages}
+                  pdfDoc={cachedPdfDoc}
+                  onPdfLoaded={handlePdfLoaded}
+                />
+              ) : (
+                <div className="text-center p-8">
+                  <FileText className="h-16 w-16 text-gray-300 mx-auto" />
+                  <p className="text-sm text-gray-500 mt-3">{fileInfo.name}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1594,6 +1638,7 @@ export default function NewOrderPage() {
         </div>
       )}
     </div>
+    </>
   );
 }
 
