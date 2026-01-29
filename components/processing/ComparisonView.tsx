@@ -373,7 +373,8 @@ export default function ComparisonView({
       console.log('========================================');
     }
 
-    if (!showOverlay && !renderText) return;
+    // Always show block outlines on the left side (overlay is always on for left panel)
+    // The showOverlay checkbox only affects whether tooltips appear on hover
 
     const scaleX = canvas.width / imageElement.naturalWidth;
     const scaleY = canvas.height / imageElement.naturalHeight;
@@ -548,22 +549,50 @@ export default function ComparisonView({
           ctx.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
         }
       } else {
-        if (isSelected || isHovered) {
-          const strokeColor = isSelected ? '#fbbf24' : '#06b6d4';
-          const lineWidth = isSelected ? 3 : 2.5;
-          const fillColor = isSelected
-            ? 'rgba(251, 191, 36, 0.1)'
-            : 'rgba(6, 182, 212, 0.1)';
+        // ALWAYS show block outlines on the left side (not just on hover)
+        // Use different styles for selected, hovered, and normal blocks
+        let strokeColor: string;
+        let lineWidth: number;
+        let fillColor: string;
 
-          ctx.strokeStyle = strokeColor;
-          ctx.lineWidth = lineWidth;
-          ctx.fillStyle = fillColor;
-
-          ctx.fillRect(scaledX, scaledY, scaledWidth, scaledHeight);
-          ctx.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
+        if (isSelected) {
+          strokeColor = '#fbbf24'; // Yellow for selected
+          lineWidth = 3;
+          fillColor = 'rgba(251, 191, 36, 0.15)';
+        } else if (isHovered) {
+          strokeColor = '#06b6d4'; // Cyan for hovered
+          lineWidth = 2.5;
+          fillColor = 'rgba(6, 182, 212, 0.12)';
+        } else {
+          // Normal blocks - always visible with subtle styling
+          strokeColor = '#8b5cf6'; // Purple for normal blocks
+          lineWidth = 1.5;
+          fillColor = 'rgba(139, 92, 246, 0.05)';
         }
+
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = lineWidth;
+        ctx.fillStyle = fillColor;
+
+        ctx.fillRect(scaledX, scaledY, scaledWidth, scaledHeight);
+        ctx.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
+
+        // Show block number for all blocks (small label in corner)
+        const label = `${index + 1}`;
+        ctx.font = 'bold 10px sans-serif';
+        const labelWidth = ctx.measureText(label).width + 6;
+        const labelHeight = 14;
+
+        // Draw label background
+        ctx.fillStyle = strokeColor;
+        ctx.fillRect(scaledX, scaledY, labelWidth, labelHeight);
+
+        // Draw label text
+        ctx.fillStyle = 'white';
+        ctx.fillText(label, scaledX + 3, scaledY + 10);
       }
 
+      // Show tooltip only for selected or hovered blocks
       if (isSelected || isHovered) {
         const label = `#${index + 1}`;
         const textPreview = block.text.length > 15
@@ -827,38 +856,26 @@ export default function ComparisonView({
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
               />
             </svg>
-            Visual Comparison - Page {pageIndex + 1}
+            Page {pageIndex + 1}
           </h3>
-          <label className="flex items-center text-sm text-purple-700 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showOverlay}
-              onChange={(e) => setShowOverlay(e.target.checked)}
-              className="mr-2"
-            />
-            Show Overlay
-          </label>
+          <p className="text-xs text-purple-600">
+            Click any block to edit
+          </p>
         </div>
-        <p className="text-xs text-purple-700 bg-white/60 px-3 py-1.5 rounded">
-          <strong>Left:</strong> Original PDF with detected blocks -&gt;
-          <strong className="ml-2">Right:</strong> Reconstruction with detected styles
-        </p>
       </div>
 
-      {/* Comparative grid */}
-      <div className="grid grid-cols-2 gap-0 divide-x divide-purple-200">
-        {/* Left: Original PDF */}
-        <div className="bg-gray-50 p-4 flex flex-col">
-          <div className="mb-2 flex items-center justify-between">
+      {/* Comparative grid - 50/50 split with max size */}
+      <div className="flex divide-x divide-purple-200">
+        {/* Left: Original PDF with detected blocks */}
+        <div className="w-1/2 bg-gray-50 p-2 flex flex-col">
+          <div className="mb-1 flex items-center justify-between">
             <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-              Original PDF
+              Original + Blocks
             </span>
-            <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
-              {blocks.length} total blocks
+            <span className="text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded">
+              {blocks.length} blocks
             </span>
           </div>
-          {/* Spacer to match right side controls height */}
-          <div className="mb-2 h-[68px]"></div>
           <div className="relative border border-gray-300 rounded bg-white flex-1">
             <img
               src={`data:image/png;base64,${originalImageBase64}`}
@@ -901,42 +918,42 @@ export default function ComparisonView({
         </div>
 
         {/* Right: Reconstructed preview */}
-        <div className="bg-purple-50 p-4 flex flex-col">
-          <div className="mb-2 flex items-center justify-between">
+        <div className="w-1/2 bg-purple-50 p-2 flex flex-col">
+          <div className="mb-1 flex items-center justify-between flex-wrap gap-1">
             <div className="flex items-center space-x-2">
               <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide">
-                Reconstructed Preview
+                Preview
               </span>
-              <span className="text-xs text-purple-600 bg-purple-200 px-2 py-1 rounded">
-                {(showTranslation && translatedBlocks ? translatedBlocks : editableBlocks).length} visible blocks
+              <span className="text-xs text-purple-600 bg-purple-200 px-2 py-0.5 rounded">
+                {(showTranslation && translatedBlocks ? translatedBlocks : editableBlocks).length} blocks
               </span>
             </div>
             <div className="flex items-center space-x-1">
               <button
                 onClick={() => setReconstructionMode('blank')}
-                className={`px-2 py-1 text-xs rounded transition-colors ${
+                className={`px-1.5 py-0.5 text-xs rounded transition-colors ${
                   reconstructionMode === 'blank'
                     ? 'bg-purple-600 text-white'
                     : 'bg-white text-purple-600 border border-purple-300 hover:bg-purple-100'
                 }`}
                 title="White background, OCR text only"
               >
-                From scratch
+                Blank
               </button>
               <button
                 onClick={() => setReconstructionMode('overlay')}
-                className={`px-2 py-1 text-xs rounded transition-colors ${
+                className={`px-1.5 py-0.5 text-xs rounded transition-colors ${
                   reconstructionMode === 'overlay'
                     ? 'bg-purple-600 text-white'
                     : 'bg-white text-purple-600 border border-purple-300 hover:bg-purple-100'
                 }`}
                 title="Original PDF with OCR text on top"
               >
-                Over PDF
+                Overlay
               </button>
               <button
                 onClick={() => setReconstructionMode('replace')}
-                className={`px-2 py-1 text-xs rounded transition-colors ${
+                className={`px-1.5 py-0.5 text-xs rounded transition-colors ${
                   reconstructionMode === 'replace'
                     ? 'bg-purple-600 text-white'
                     : 'bg-white text-purple-600 border border-purple-300 hover:bg-purple-100'
@@ -949,12 +966,12 @@ export default function ComparisonView({
           </div>
 
           {/* Translation and PDF buttons */}
-          <div className="mb-2 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+          <div className="mb-1 flex items-center justify-between flex-wrap gap-1">
+            <div className="flex items-center space-x-1">
               <button
                 onClick={translateBlocks}
                 disabled={isTranslating}
-                className={`px-3 py-1.5 text-xs rounded font-medium transition-colors flex items-center ${
+                className={`px-2 py-1 text-xs rounded font-medium transition-colors flex items-center ${
                   isTranslating
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
@@ -963,11 +980,11 @@ export default function ComparisonView({
               >
                 {isTranslating ? (
                   <>
-                    <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                    Translating...
+                    <Loader2 className="animate-spin -ml-1 mr-1 h-3 w-3" />
+                    ...
                   </>
                 ) : (
-                  <>Translate to {targetLanguage.toUpperCase()}</>
+                  <>{targetLanguage.toUpperCase()}</>
                 )}
               </button>
               {translatedBlocks && (
@@ -978,7 +995,7 @@ export default function ComparisonView({
                     onChange={(e) => setShowTranslation(e.target.checked)}
                     className="mr-1"
                   />
-                  Show translation
+                  Show
                 </label>
               )}
               {/* Generate PDF button - temporarily hidden
